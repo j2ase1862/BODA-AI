@@ -1,0 +1,25 @@
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\bin\Debug\net8.0-windows\BODA VISION AI.exe
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\bin\Debug\net8.0-windows\BODA VISION AI.deps.json
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\bin\Debug\net8.0-windows\BODA VISION AI.runtimeconfig.json
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\bin\Debug\net8.0-windows\BODA VISION AI.dll
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\bin\Debug\net8.0-windows\BODA VISION AI.pdb
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\bin\Debug\net8.0-windows\CommunityToolkit.Mvvm.dll
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI.csproj.AssemblyReference.cache
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\Styles\MenuStyles.baml
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\Views\MainView.g.cs
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\App.g.cs
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI_MarkupCompile.cache
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI_MarkupCompile.lref
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\App.baml
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\Views\MainView.baml
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI.g.resources
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI.GeneratedMSBuildEditorConfig.editorconfig
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI.AssemblyInfoInputs.cache
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI.AssemblyInfo.cs
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI.csproj.CoreCompileInputs.cache
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VIS.14BF3C66.Up2Date
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI.dll
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\refint\BODA VISION AI.dll
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI.pdb
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\BODA VISION AI.genruntimeconfig.cache
+D:\projects\BODA VISION AI\BODA VISION AI\BODA VISION AI\obj\Debug\net8.0-windows\ref\BODA VISION AI.dll

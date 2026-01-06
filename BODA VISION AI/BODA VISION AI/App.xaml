@@ -1,0 +1,15 @@
+﻿<Application x:Class="BODA_VISION_AI.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:BODA_VISION_AI"
+             StartupUri="Views\MainView.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 스타일 파일들 불러오기 -->
+                <ResourceDictionary Source="Styles/MenuStyles.xaml"/>
+                <!-- 다른 스타일 파일들도 추가 -->
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
