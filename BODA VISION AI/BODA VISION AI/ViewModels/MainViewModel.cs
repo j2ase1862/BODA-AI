@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,12 +10,27 @@ using System.Windows.Input;
 
 namespace BODA_VISION_AI.ViewModels
 {
-    // 도구 아이템 모델
-    public class ToolItem
+    // ObservableObject 상속 추가
+    public class ToolItem : ObservableObject
     {
         public string Name { get; set; }
-        public string ToolType { get; set; } // 어떤 컨트롤을 생성할지 구분하는 키
+        public string ToolType { get; set; }
+
+        private double _x;
+        public double X
+        {
+            get => _x;
+            set => SetProperty(ref _x, value); // 값이 바뀌면 UI에 알림
+        }
+
+        private double _y;
+        public double Y
+        {
+            get => _y;
+            set => SetProperty(ref _y, value); // 값이 바뀌면 UI에 알림
+        }
     }
+
 
     // 트리 구조를 위한 카테고리 모델
     public class ToolCategory
@@ -30,6 +46,7 @@ namespace BODA_VISION_AI.ViewModels
 
         // Sidebar2에 생성된 컨트롤들의 목록
         public ObservableCollection<ToolItem> DroppedTools { get; } = new();
+
 
         #region Fields
         private readonly string _appName = "BODA VISION AI";

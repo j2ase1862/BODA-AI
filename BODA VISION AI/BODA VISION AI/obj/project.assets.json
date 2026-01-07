@@ -70,23 +70,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\gdkim\\.nuget\\packages\\": {},
+    "C:\\Users\\vinos\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\projects\\BODA VISION AI\\BODA VISION AI\\BODA VISION AI\\BODA VISION AI.csproj",
+      "projectUniqueName": "D:\\Repo\\BODA-AI\\BODA VISION AI\\BODA VISION AI\\BODA VISION AI.csproj",
       "projectName": "BODA VISION AI",
-      "projectPath": "D:\\projects\\BODA VISION AI\\BODA VISION AI\\BODA VISION AI\\BODA VISION AI.csproj",
-      "packagesPath": "C:\\Users\\gdkim\\.nuget\\packages\\",
-      "outputPath": "D:\\projects\\BODA VISION AI\\BODA VISION AI\\BODA VISION AI\\obj\\",
+      "projectPath": "D:\\Repo\\BODA-AI\\BODA VISION AI\\BODA VISION AI\\BODA VISION AI.csproj",
+      "packagesPath": "C:\\Users\\vinos\\.nuget\\packages\\",
+      "outputPath": "D:\\Repo\\BODA-AI\\BODA VISION AI\\BODA VISION AI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\gdkim\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\vinos\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -95,7 +95,6 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -114,7 +113,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "10.0.100"
     },
     "frameworks": {
       "net8.0-windows7.0": {
@@ -144,7 +143,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
