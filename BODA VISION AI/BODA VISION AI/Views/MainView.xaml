@@ -34,10 +34,12 @@
                         <StackPanel Style="{StaticResource TransparentMenuPanelStyle}"/>
                     </ItemsPanelTemplate>
                 </MenuItem.ItemsPanel>
-                <MenuItem Header="_New" Style="{StaticResource SubMenuItemFullStyle}" Command="{Binding NewCommand}"/>
-                <MenuItem Header="_Open" Style="{StaticResource SubMenuItemFullStyle}" Command="{Binding OpenCommand}"/>
+                <MenuItem Header="New" 
+                          Style="{StaticResource SubMenuItemFullStyle}" Command="{Binding NewCommand}"/>
+                <MenuItem Header="Open Image File" 
+                          Style="{StaticResource SubMenuItemFullStyle}" Command="{Binding OpenImageFileCommand}"/>
                 <Separator Foreground="#606060"/>
-                <MenuItem Header="_Exit" Style="{StaticResource SubMenuItemFullStyle}" Command="{Binding CloseCommand}"/>
+                <MenuItem Header="Exit" Style="{StaticResource SubMenuItemFullStyle}" Command="{Binding CloseCommand}"/>
             </MenuItem>
 
             <!-- Edit 메뉴 -->
@@ -112,6 +114,12 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+            </Border>
+
+            <Border Grid.Column="2" Background="Black" BorderBrush="#333333" BorderThickness="1,0,0,0">
+                <Image x:Name="MainImageDisplay" 
+                       Source="{Binding DisplayImage}" 
+                       Stretch="Uniform"/>
             </Border>
         </Grid>
     </Grid>

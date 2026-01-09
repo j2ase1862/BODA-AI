@@ -1,10 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "1ZKtb8PWU9w=",
+  "dgSpecHash": "40jHqk9rt60=",
   "success": true,
   "projectFilePath": "D:\\Repo\\BODA-AI\\BODA VISION AI\\BODA VISION AI\\BODA VISION AI.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\vinos\\.nuget\\packages\\communitytoolkit.mvvm\\8.4.0\\communitytoolkit.mvvm.8.4.0.nupkg.sha512"
+    "C:\\Users\\vinos\\.nuget\\packages\\communitytoolkit.mvvm\\8.4.0\\communitytoolkit.mvvm.8.4.0.nupkg.sha512",
+    "C:\\Users\\vinos\\.nuget\\packages\\microsoft.win32.systemevents\\8.0.0\\microsoft.win32.systemevents.8.0.0.nupkg.sha512",
+    "C:\\Users\\vinos\\.nuget\\packages\\opencvsharp4\\4.11.0.20250507\\opencvsharp4.4.11.0.20250507.nupkg.sha512",
+    "C:\\Users\\vinos\\.nuget\\packages\\opencvsharp4.runtime.win\\4.11.0.20250507\\opencvsharp4.runtime.win.4.11.0.20250507.nupkg.sha512",
+    "C:\\Users\\vinos\\.nuget\\packages\\opencvsharp4.wpfextensions\\4.11.0.20250507\\opencvsharp4.wpfextensions.4.11.0.20250507.nupkg.sha512",
+    "C:\\Users\\vinos\\.nuget\\packages\\system.drawing.common\\8.0.11\\system.drawing.common.8.0.11.nupkg.sha512",
+    "C:\\Users\\vinos\\.nuget\\packages\\system.memory\\4.6.3\\system.memory.4.6.3.nupkg.sha512"
   ],
   "logs": []
 }

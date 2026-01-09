@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BODA VISION AI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3d72cf3694ecabc95b683701a393901e78352d04")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+205febb1a12eaf464ebb47e3ef61c149475e0609")]
 [assembly: System.Reflection.AssemblyProductAttribute("BODA VISION AI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BODA VISION AI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

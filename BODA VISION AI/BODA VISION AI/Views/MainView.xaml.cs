@@ -1,4 +1,5 @@
 ﻿using BODA_VISION_AI.ViewModels;
+using OpenCvSharp;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,19 +10,23 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using OpenCvSharp.WpfExtensions; // 이 네임스페이스가 필수입니다.
 
 namespace BODA_VISION_AI
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainView : Window
+    public partial class MainView : System.Windows.Window
     {
         public MainView()
         {
             InitializeComponent();
 
             DataContext = new MainViewModel();
+
+            // 테스트용 이미지 로드 (예시)
+            //LoadTestImage();
         }
 
         private void Sidebar2_Drop(object sender, DragEventArgs e)
@@ -38,7 +43,7 @@ namespace BODA_VISION_AI
                 if (vm != null && sourceTool != null && dropContainer != null)
                 {
                     // 2. 드롭된 위치(좌표) 계산
-                    Point position = e.GetPosition(dropContainer);
+                    System.Windows.Point position = e.GetPosition(dropContainer);
 
                     // 3. *중요* 새로운 아이템 인스턴스 생성 (복제 + 좌표 설정)
                     var newTool = new ToolItem
@@ -70,7 +75,7 @@ namespace BODA_VISION_AI
 
         // 이동 로직을 위한 변수들
         private bool _isDragging = false;
-        private Point _mouseOffset; // 아이템 내에서 마우스가 클릭된 상대 위치
+        private System.Windows.Point _mouseOffset; // 아이템 내에서 마우스가 클릭된 상대 위치
 
         private void Item_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -101,7 +106,7 @@ namespace BODA_VISION_AI
                 var canvas = FindParent<Canvas>(element);
                 if (canvas == null) return;
 
-                Point currentPoint = e.GetPosition(canvas);
+                System.Windows.Point currentPoint = e.GetPosition(canvas);
 
                 // 2. 오프셋을 고려하여 아이템의 새로운 X, Y 설정
                 // (마우스 현재 위치 - 클릭했던 아이템 내부 위치)
@@ -130,6 +135,23 @@ namespace BODA_VISION_AI
             if (parentObject == null) return null;
             if (parentObject is T parent) return parent;
             return FindParent<T>(parentObject);
+        }
+
+        private void LoadTestImage()
+        {
+            // 1. 이미지 로드 (OpenCvSharp Mat)
+            // 실제 프로젝트에서는 카메라 그랩 이벤트나 파일 열기에서 호출겠죠.
+            using (var src = Cv2.ImRead("test.jpg"))
+            {
+                if (src.Empty()) return;
+
+                // 2. Mat -> WriteableBitmap 변환 (WpfExtensions 기능)
+                // WriteableBitmap을 사용해야 메모리 누수 없이 효율적입니다.
+                var bitmap = src.ToWriteableBitmap();
+
+                // 3. WPF Image 컨트롤에 할당
+                MainImageDisplay.Source = bitmap;
+            }
         }
     }
 }
