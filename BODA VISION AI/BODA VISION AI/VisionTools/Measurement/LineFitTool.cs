@@ -350,12 +350,15 @@ namespace BODA_VISION_AI.VisionTools.Measurement
 
             // OpenCV FitLine 사용
             var pointsArray = points.Select(p => new Point2f((float)p.X, (float)p.Y)).ToArray();
-            var lineParams = new float[4];
+            using var line = new Mat();
 
             Cv2.FitLine(
                 InputArray.Create(pointsArray),
-                OutputArray.Create(lineParams),
+                line,
                 DistanceTypes.L2, 0, 0.01, 0.01);
+
+            // Mat에서 결과 추출
+            line.GetArray(out float[] lineParams);
 
             result.Direction = new Point2d(lineParams[0], lineParams[1]);
             result.PointOnLine = new Point2d(lineParams[2], lineParams[3]);
