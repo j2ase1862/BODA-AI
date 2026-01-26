@@ -15,6 +15,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using CvRect = OpenCvSharp.Rect;
 
 namespace BODA_VISION_AI.ViewModels
 {
@@ -455,7 +456,7 @@ namespace BODA_VISION_AI.ViewModels
             {
                 var rect = SelectedROI.GetBoundingRect();
                 // 이미지 범위 내로 클리핑
-                rect = new Rect(
+                rect = new CvRect(
                     Math.Max(0, rect.X),
                     Math.Max(0, rect.Y),
                     Math.Min(rect.Width, CurrentImage.Width - rect.X),
