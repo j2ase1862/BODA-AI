@@ -1,157 +1,160 @@
-﻿using BODA_VISION_AI.ViewModels;
+using BODA_VISION_AI.Models;
+using BODA_VISION_AI.ViewModels;
 using OpenCvSharp;
-using System.Text;
+using OpenCvSharp.WpfExtensions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using OpenCvSharp.WpfExtensions; // 이 네임스페이스가 필수입니다.
 
 namespace BODA_VISION_AI
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// MainView.xaml에 대한 상호 작용 논리
     /// </summary>
     public partial class MainView : System.Windows.Window
     {
+        private bool _isDragging = false;
+        private System.Windows.Point _mouseOffset;
+
         public MainView()
         {
             InitializeComponent();
-
             DataContext = new MainViewModel();
-
-            // 테스트용 이미지 로드 (예시)
-            //LoadTestImage();
         }
 
+        /// <summary>
+        /// 도구 드롭 처리
+        /// </summary>
         private void Sidebar2_Drop(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent("Object"))
             {
-                // 1. 드래그된 원본 데이터 가져오기
                 var sourceTool = e.Data.GetData("Object") as ToolItem;
-                var vm = this.DataContext as MainViewModel;
-
-                // sender는 이벤트를 발생시킨 ItemsControl (Canvas를 포함한 컨테이너)
+                var vm = DataContext as MainViewModel;
                 var dropContainer = sender as UIElement;
 
                 if (vm != null && sourceTool != null && dropContainer != null)
                 {
-                    // 2. 드롭된 위치(좌표) 계산
                     System.Windows.Point position = e.GetPosition(dropContainer);
 
-                    // 3. *중요* 새로운 아이템 인스턴스 생성 (복제 + 좌표 설정)
-                    var newTool = new ToolItem
-                    {
-                        Name = sourceTool.Name,       // 이름 복사
-                        ToolType = sourceTool.ToolType, // 타입 복사
-                        X = position.X,               // X 좌표 설정
-                        Y = position.Y                // Y 좌표 설정
-                    };
+                    // ViewModel의 CreateDroppedTool 메서드를 사용하여 새 도구 생성
+                    var newTool = vm.CreateDroppedTool(sourceTool, position.X, position.Y);
 
-                    // 4. 컬렉션에 추가 -> UI에 자동 반영됨
-                    vm.DroppedTools.Add(newTool);
+                    if (newTool != null)
+                    {
+                        // 새로 생성된 도구를 선택
+                        vm.SelectedTool = newTool;
+                    }
                 }
             }
         }
 
+        /// <summary>
+        /// 도구 팔레트에서 드래그 시작
+        /// </summary>
         private void ToolItem_PreviewMouseMove(object sender, MouseEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed && sender is FrameworkElement fe && fe.DataContext is ToolItem tool)
             {
-                // 드래그 데이터 패키지 생성
                 DataObject data = new DataObject();
                 data.SetData("Object", tool);
-
-                // 드래그 시작
                 DragDrop.DoDragDrop(fe, data, DragDropEffects.Copy);
             }
         }
 
-        // 이동 로직을 위한 변수들
-        private bool _isDragging = false;
-        private System.Windows.Point _mouseOffset; // 아이템 내에서 마우스가 클릭된 상대 위치
-
+        /// <summary>
+        /// 워크스페이스 아이템 드래그 시작
+        /// </summary>
         private void Item_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             var element = sender as FrameworkElement;
             if (element != null)
             {
-                // 1. 드래그 시작 상태로 변경
                 _isDragging = true;
-
-                // 2. 클릭한 지점과 아이템 좌상단 사이의 오프셋 저장
                 _mouseOffset = e.GetPosition(element);
-
-                // 3. 마우스 이벤트를 이 컨트롤이 독점하도록 캡처 (화면 밖으로 나가도 추적)
                 element.CaptureMouse();
+
+                // 클릭한 도구를 선택
+                if (element.DataContext is ToolItem tool)
+                {
+                    var vm = DataContext as MainViewModel;
+                    if (vm != null)
+                    {
+                        // 기존 선택 해제
+                        foreach (var t in vm.DroppedTools)
+                            t.IsSelected = false;
+
+                        // 현재 도구 선택
+                        tool.IsSelected = true;
+                        vm.SelectedTool = tool;
+                    }
+                }
             }
         }
 
+        /// <summary>
+        /// 워크스페이스 아이템 드래그 이동
+        /// </summary>
         private void Item_MouseMove(object sender, MouseEventArgs e)
         {
             var element = sender as FrameworkElement;
 
-            // 드래그 중이고, 데이터 컨텍스트가 ToolItem인 경우
             if (_isDragging && element != null && element.DataContext is ToolItem tool)
             {
-                // 1. Canvas(Sidebar2) 기준의 마우스 좌표를 구함
-                // 주의: Sidebar2 이름을 x:Name="Sidebar2"로 지정해야 접근 가능
-                // 만약 x:Name이 없다면 element의 부모를 찾아 Canvas를 구해야 함
                 var canvas = FindParent<Canvas>(element);
                 if (canvas == null) return;
 
                 System.Windows.Point currentPoint = e.GetPosition(canvas);
-
-                // 2. 오프셋을 고려하여 아이템의 새로운 X, Y 설정
-                // (마우스 현재 위치 - 클릭했던 아이템 내부 위치)
                 tool.X = currentPoint.X - _mouseOffset.X;
                 tool.Y = currentPoint.Y - _mouseOffset.Y;
             }
         }
 
+        /// <summary>
+        /// 워크스페이스 아이템 드래그 종료
+        /// </summary>
         private void Item_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             var element = sender as FrameworkElement;
             if (element != null)
             {
-                // 1. 드래그 종료
                 _isDragging = false;
-
-                // 2. 마우스 캡처 해제
                 element.ReleaseMouseCapture();
             }
         }
 
-        // 부모 컨트롤 찾기 헬퍼 메서드
-        private static T FindParent<T>(DependencyObject child) where T : DependencyObject
+        /// <summary>
+        /// 워크스페이스 아이템 우클릭 (선택)
+        /// </summary>
+        private void Item_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+            var element = sender as FrameworkElement;
+            if (element?.DataContext is ToolItem tool)
+            {
+                var vm = DataContext as MainViewModel;
+                if (vm != null)
+                {
+                    // 기존 선택 해제
+                    foreach (var t in vm.DroppedTools)
+                        t.IsSelected = false;
+
+                    // 현재 도구 선택
+                    tool.IsSelected = true;
+                    vm.SelectedTool = tool;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 부모 컨트롤 찾기 헬퍼 메서드
+        /// </summary>
+        private static T? FindParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            DependencyObject? parentObject = VisualTreeHelper.GetParent(child);
             if (parentObject == null) return null;
             if (parentObject is T parent) return parent;
             return FindParent<T>(parentObject);
-        }
-
-        private void LoadTestImage()
-        {
-            // 1. 이미지 로드 (OpenCvSharp Mat)
-            // 실제 프로젝트에서는 카메라 그랩 이벤트나 파일 열기에서 호출겠죠.
-            using (var src = Cv2.ImRead("test.jpg"))
-            {
-                if (src.Empty()) return;
-
-                // 2. Mat -> WriteableBitmap 변환 (WpfExtensions 기능)
-                // WriteableBitmap을 사용해야 메모리 누수 없이 효율적입니다.
-                var bitmap = src.ToWriteableBitmap();
-
-                // 3. WPF Image 컨트롤에 할당
-                MainImageDisplay.Source = bitmap;
-            }
         }
     }
 }
