@@ -92,7 +92,7 @@ namespace BODA_VISION_AI.Views.ToolSettings
             AddCheckBox("Use Otsu", tool, nameof(ThresholdTool.UseOtsu));
             AddCheckBox("Use Adaptive", tool, nameof(ThresholdTool.UseAdaptive));
             AddSlider("Block Size", tool, nameof(ThresholdTool.BlockSize), 3, 51, 2, true);
-            AddSlider("Constant C", tool, nameof(ThresholdTool.C), -20, 20, 1);
+            AddSlider("Constant C", tool, nameof(ThresholdTool.CValue), -20, 20, 1);
         }
         #endregion
 
@@ -102,7 +102,7 @@ namespace BODA_VISION_AI.Views.ToolSettings
             AddEnumComboBox<EdgeDetectionMethod>("Method", tool, nameof(EdgeDetectionTool.Method));
             AddSlider("Canny Threshold 1", tool, nameof(EdgeDetectionTool.CannyThreshold1), 0, 255, 1);
             AddSlider("Canny Threshold 2", tool, nameof(EdgeDetectionTool.CannyThreshold2), 0, 255, 1);
-            AddSlider("Aperture Size", tool, nameof(EdgeDetectionTool.ApertureSize), 3, 7, 2, true);
+            AddSlider("Aperture Size", tool, nameof(EdgeDetectionTool.CannyApertureSize), 3, 7, 2, true);
             AddCheckBox("L2 Gradient", tool, nameof(EdgeDetectionTool.L2Gradient));
         }
         #endregion
@@ -135,7 +135,7 @@ namespace BODA_VISION_AI.Views.ToolSettings
             AddCheckBox("Enable Multi-Scale", tool, nameof(TemplateMatchTool.EnableMultiScale));
             AddSlider("Min Scale", tool, nameof(TemplateMatchTool.MinScale), 0.5, 1, 0.05);
             AddSlider("Max Scale", tool, nameof(TemplateMatchTool.MaxScale), 1, 2, 0.05);
-            AddSlider("Scale Steps", tool, nameof(TemplateMatchTool.ScaleSteps), 1, 20, 1);
+            AddSlider("Scale Step", tool, nameof(TemplateMatchTool.ScaleStep), 0.01, 0.5, 0.01);
             AddCheckBox("Enable Multi-Angle", tool, nameof(TemplateMatchTool.EnableMultiAngle));
             AddSlider("Angle Step", tool, nameof(TemplateMatchTool.AngleStep), 1, 45, 1);
         }
