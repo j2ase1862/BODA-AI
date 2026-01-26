@@ -1,3 +1,4 @@
+using BODA_VISION_AI.Controls;
 using BODA_VISION_AI.Models;
 using BODA_VISION_AI.VisionTools.BlobAnalysis;
 using BODA_VISION_AI.VisionTools.ImageProcessing;
@@ -13,6 +14,8 @@ namespace BODA_VISION_AI.Views.ToolSettings
 {
     public partial class ToolSettingsView : UserControl
     {
+        private string _currentToolType = "";
+
         public ToolSettingsView()
         {
             InitializeComponent();
@@ -24,8 +27,40 @@ namespace BODA_VISION_AI.Views.ToolSettings
 
             if (DataContext is VisionToolBase tool)
             {
+                _currentToolType = tool.ToolType;
+                AddToolHeader(tool);
                 BuildParameterUI(tool);
             }
+        }
+
+        private void AddToolHeader(VisionToolBase tool)
+        {
+            var headerPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+
+            var titleText = new TextBlock
+            {
+                Text = tool.Name,
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFD700")),
+                FontWeight = FontWeights.Bold,
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            headerPanel.Children.Add(titleText);
+
+            // 도구 도움말 아이콘
+            var helpIcon = new HelpIcon
+            {
+                ToolType = tool.ToolType,
+                Margin = new Thickness(8, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            headerPanel.Children.Add(helpIcon);
+
+            ParametersPanel.Children.Add(headerPanel);
         }
 
         private void BuildParameterUI(VisionToolBase tool)
@@ -260,7 +295,8 @@ namespace BODA_VISION_AI.Views.ToolSettings
             {
                 Text = label + ": ",
                 Foreground = new SolidColorBrush(Colors.LightGray),
-                FontSize = 12
+                FontSize = 12,
+                VerticalAlignment = VerticalAlignment.Center
             };
             headerPanel.Children.Add(labelText);
 
@@ -268,7 +304,8 @@ namespace BODA_VISION_AI.Views.ToolSettings
             {
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00BFFF")),
                 FontWeight = FontWeights.Bold,
-                FontSize = 12
+                FontSize = 12,
+                VerticalAlignment = VerticalAlignment.Center
             };
             var valueBinding = new Binding(propertyName)
             {
@@ -278,6 +315,16 @@ namespace BODA_VISION_AI.Views.ToolSettings
             };
             valueText.SetBinding(TextBlock.TextProperty, valueBinding);
             headerPanel.Children.Add(valueText);
+
+            // 파라미터 도움말 아이콘 추가
+            var helpIcon = new HelpIcon
+            {
+                ToolType = _currentToolType,
+                ParameterName = propertyName,
+                Margin = new Thickness(5, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            headerPanel.Children.Add(helpIcon);
 
             panel.Children.Add(headerPanel);
 
@@ -301,11 +348,13 @@ namespace BODA_VISION_AI.Views.ToolSettings
 
         private void AddCheckBox(string label, object source, string propertyName)
         {
+            var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 5, 0, 5) };
+
             var checkBox = new CheckBox
             {
                 Content = label,
                 Foreground = new SolidColorBrush(Colors.White),
-                Margin = new Thickness(0, 5, 0, 5)
+                VerticalAlignment = VerticalAlignment.Center
             };
             var binding = new Binding(propertyName)
             {
@@ -313,19 +362,45 @@ namespace BODA_VISION_AI.Views.ToolSettings
                 Mode = BindingMode.TwoWay
             };
             checkBox.SetBinding(CheckBox.IsCheckedProperty, binding);
-            ParametersPanel.Children.Add(checkBox);
+            panel.Children.Add(checkBox);
+
+            // 파라미터 도움말 아이콘 추가
+            var helpIcon = new HelpIcon
+            {
+                ToolType = _currentToolType,
+                ParameterName = propertyName,
+                Margin = new Thickness(5, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            panel.Children.Add(helpIcon);
+
+            ParametersPanel.Children.Add(panel);
         }
 
         private void AddTextBox(string label, object source, string propertyName)
         {
+            var labelPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 5, 0, 2) };
+
             var labelText = new TextBlock
             {
                 Text = label,
                 Foreground = new SolidColorBrush(Colors.LightGray),
                 FontSize = 12,
-                Margin = new Thickness(0, 5, 0, 2)
+                VerticalAlignment = VerticalAlignment.Center
             };
-            ParametersPanel.Children.Add(labelText);
+            labelPanel.Children.Add(labelText);
+
+            // 파라미터 도움말 아이콘 추가
+            var helpIcon = new HelpIcon
+            {
+                ToolType = _currentToolType,
+                ParameterName = propertyName,
+                Margin = new Thickness(5, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            labelPanel.Children.Add(helpIcon);
+
+            ParametersPanel.Children.Add(labelPanel);
 
             var textBox = new TextBox
             {
@@ -335,26 +410,40 @@ namespace BODA_VISION_AI.Views.ToolSettings
                 Padding = new Thickness(5, 3, 5, 3),
                 Margin = new Thickness(0, 0, 0, 5)
             };
-            var binding = new Binding(propertyName)
+            var textBinding = new Binding(propertyName)
             {
                 Source = source,
                 Mode = BindingMode.TwoWay,
                 UpdateSourceTrigger = UpdateSourceTrigger.LostFocus
             };
-            textBox.SetBinding(TextBox.TextProperty, binding);
+            textBox.SetBinding(TextBox.TextProperty, textBinding);
             ParametersPanel.Children.Add(textBox);
         }
 
         private void AddEnumComboBox<TEnum>(string label, object source, string propertyName) where TEnum : struct, Enum
         {
+            var labelPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 5, 0, 2) };
+
             var labelText = new TextBlock
             {
                 Text = label,
                 Foreground = new SolidColorBrush(Colors.LightGray),
                 FontSize = 12,
-                Margin = new Thickness(0, 5, 0, 2)
+                VerticalAlignment = VerticalAlignment.Center
             };
-            ParametersPanel.Children.Add(labelText);
+            labelPanel.Children.Add(labelText);
+
+            // 파라미터 도움말 아이콘 추가
+            var helpIcon = new HelpIcon
+            {
+                ToolType = _currentToolType,
+                ParameterName = propertyName,
+                Margin = new Thickness(5, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            labelPanel.Children.Add(helpIcon);
+
+            ParametersPanel.Children.Add(labelPanel);
 
             var comboBox = new ComboBox
             {
