@@ -5,13 +5,34 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="300"
-             Background="#2D2D30">
+             Background="#2D2D30"
+             DataContextChanged="UserControl_DataContextChanged">
 
     <UserControl.Resources>
         <Style x:Key="SettingLabelStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="LightGray"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="0,5,0,2"/>
+            <Setter Property="Margin" Value="0,8,0,2"/>
+        </Style>
+
+        <Style x:Key="SettingTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="#3E3E42"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="Padding" Value="5,3"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+
+        <Style x:Key="SettingSliderStyle" TargetType="Slider">
+            <Setter Property="Margin" Value="0,0,0,5"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style x:Key="SettingComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="#3E3E42"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
         </Style>
 
         <Style x:Key="SettingCheckBoxStyle" TargetType="CheckBox">
@@ -23,7 +44,12 @@
             <Setter Property="Foreground" Value="#FFD700"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Margin" Value="0,10,0,5"/>
+            <Setter Property="Margin" Value="0,15,0,5"/>
+        </Style>
+
+        <Style x:Key="SliderValueStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#00BFFF"/>
+            <Setter Property="FontWeight" Value="Bold"/>
         </Style>
     </UserControl.Resources>
 
@@ -32,7 +58,7 @@
             <!-- Tool Name -->
             <TextBlock Text="{Binding Name, FallbackValue='도구를 선택하세요'}"
                        Style="{StaticResource SectionHeaderStyle}"
-                       FontSize="16"/>
+                       FontSize="16" Margin="0,0,0,0"/>
 
             <TextBlock Text="{Binding ToolType, StringFormat='Type: {0}', FallbackValue=''}"
                        Foreground="Gray" FontSize="11" Margin="0,0,0,10"/>
@@ -46,12 +72,17 @@
             <CheckBox Content="Use ROI" IsChecked="{Binding UseROI, FallbackValue=False}"
                       Style="{StaticResource SettingCheckBoxStyle}"/>
 
+            <!-- Tool-Specific Parameters (동적 생성) -->
+            <TextBlock Text="Parameters" Style="{StaticResource SectionHeaderStyle}"/>
+            <StackPanel x:Name="ParametersPanel"/>
+
             <!-- Execution Info -->
             <TextBlock Text="Execution Info" Style="{StaticResource SectionHeaderStyle}"/>
 
             <TextBlock Style="{StaticResource SettingLabelStyle}">
                 <Run Text="Last Execution Time: "/>
-                <Run Text="{Binding ExecutionTime, StringFormat='{}{0:F2} ms', FallbackValue='N/A'}"/>
+                <Run Text="{Binding ExecutionTime, StringFormat='{}{0:F2} ms', FallbackValue='N/A'}"
+                     Foreground="#00BFFF" FontWeight="Bold"/>
             </TextBlock>
         </StackPanel>
     </ScrollViewer>
