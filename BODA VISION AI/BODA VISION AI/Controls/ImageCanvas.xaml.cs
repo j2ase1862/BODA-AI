@@ -788,49 +788,55 @@ namespace BODA_VISION_AI.Controls
         private void SelectTool_Checked(object sender, RoutedEventArgs e)
         {
             _currentMode = EditMode.Select;
+            if (!IsLoaded) return;
             ClearTempDrawings();
             _polygonPoints.Clear();
-            StatusText.Text = "선택 모드: ROI를 클릭하여 선택하세요";
+            if (StatusText != null) StatusText.Text = "선택 모드: ROI를 클릭하여 선택하세요";
         }
 
         private void RectangleTool_Checked(object sender, RoutedEventArgs e)
         {
             _currentMode = EditMode.DrawRectangle;
+            if (!IsLoaded) return;
             ClearTempDrawings();
             _polygonPoints.Clear();
-            StatusText.Text = "사각형 모드: 드래그하여 사각형 ROI를 그리세요";
+            if (StatusText != null) StatusText.Text = "사각형 모드: 드래그하여 사각형 ROI를 그리세요";
         }
 
         private void RectAffineTool_Checked(object sender, RoutedEventArgs e)
         {
             _currentMode = EditMode.DrawRectangleAffine;
+            if (!IsLoaded) return;
             ClearTempDrawings();
             _polygonPoints.Clear();
-            StatusText.Text = "회전 사각형 모드: 드래그하여 회전 가능한 사각형 ROI를 그리세요";
+            if (StatusText != null) StatusText.Text = "회전 사각형 모드: 드래그하여 회전 가능한 사각형 ROI를 그리세요";
         }
 
         private void CircleTool_Checked(object sender, RoutedEventArgs e)
         {
             _currentMode = EditMode.DrawCircle;
+            if (!IsLoaded) return;
             ClearTempDrawings();
             _polygonPoints.Clear();
-            StatusText.Text = "원 모드: 중심에서 드래그하여 원 ROI를 그리세요";
+            if (StatusText != null) StatusText.Text = "원 모드: 중심에서 드래그하여 원 ROI를 그리세요";
         }
 
         private void EllipseTool_Checked(object sender, RoutedEventArgs e)
         {
             _currentMode = EditMode.DrawEllipse;
+            if (!IsLoaded) return;
             ClearTempDrawings();
             _polygonPoints.Clear();
-            StatusText.Text = "타원 모드: 드래그하여 타원 ROI를 그리세요";
+            if (StatusText != null) StatusText.Text = "타원 모드: 드래그하여 타원 ROI를 그리세요";
         }
 
         private void PolygonTool_Checked(object sender, RoutedEventArgs e)
         {
             _currentMode = EditMode.DrawPolygon;
+            if (!IsLoaded) return;
             ClearTempDrawings();
             _polygonPoints.Clear();
-            StatusText.Text = "다각형 모드: 클릭하여 점을 추가하고, 우클릭으로 완료하세요";
+            if (StatusText != null) StatusText.Text = "다각형 모드: 클릭하여 점을 추가하고, 우클릭으로 완료하세요";
         }
 
         #endregion
