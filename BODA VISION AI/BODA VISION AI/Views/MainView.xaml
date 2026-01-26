@@ -187,7 +187,14 @@
                                                 Padding="8,4" Margin="0,2"
                                                 PreviewMouseMove="ToolItem_PreviewMouseMove"
                                                 Cursor="Hand">
-                                            <TextBlock Text="{Binding Name}" Foreground="White" FontSize="11"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Name}"
+                                                           Foreground="White" FontSize="11"
+                                                           VerticalAlignment="Center"/>
+                                                <controls:HelpIcon ToolType="{Binding ToolType}"
+                                                                   Margin="6,0,0,0"
+                                                                   VerticalAlignment="Center"/>
+                                            </StackPanel>
                                         </Border>
                                     </DataTemplate>
                                 </HierarchicalDataTemplate.ItemTemplate>
