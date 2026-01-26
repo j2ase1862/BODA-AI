@@ -54,6 +54,7 @@ namespace BODA_VISION_AI.ViewModels
                 if (value != null)
                     VisionService.Instance.SetImage(value);
                 UpdateDisplayImage();
+                NotifyCommandsCanExecuteChanged();
             }
         }
 
@@ -114,6 +115,7 @@ namespace BODA_VISION_AI.ViewModels
             {
                 SetProperty(ref _selectedTool, value);
                 OnPropertyChanged(nameof(SelectedVisionTool));
+                NotifyCommandsCanExecuteChanged();
             }
         }
 
@@ -146,15 +148,15 @@ namespace BODA_VISION_AI.ViewModels
         #endregion
 
         #region Commands
-        public ICommand CloseCommand { get; }
-        public ICommand OpenImageFileCommand { get; }
-        public ICommand RunAllCommand { get; }
-        public ICommand RunSelectedCommand { get; }
-        public ICommand ClearToolsCommand { get; }
-        public ICommand RemoveToolCommand { get; }
-        public ICommand MoveToolUpCommand { get; }
-        public ICommand MoveToolDownCommand { get; }
-        public ICommand TrainPatternCommand { get; }
+        public RelayCommand CloseCommand { get; }
+        public RelayCommand OpenImageFileCommand { get; }
+        public RelayCommand RunAllCommand { get; }
+        public RelayCommand RunSelectedCommand { get; }
+        public RelayCommand ClearToolsCommand { get; }
+        public RelayCommand<ToolItem> RemoveToolCommand { get; }
+        public RelayCommand<ToolItem> MoveToolUpCommand { get; }
+        public RelayCommand<ToolItem> MoveToolDownCommand { get; }
+        public RelayCommand TrainPatternCommand { get; }
         #endregion
 
         #region Constructor
@@ -570,6 +572,16 @@ namespace BODA_VISION_AI.ViewModels
         }
 
         #endregion
+
+        /// <summary>
+        /// 명령의 CanExecute 상태 갱신
+        /// </summary>
+        private void NotifyCommandsCanExecuteChanged()
+        {
+            RunAllCommand?.NotifyCanExecuteChanged();
+            RunSelectedCommand?.NotifyCanExecuteChanged();
+            TrainPatternCommand?.NotifyCanExecuteChanged();
+        }
 
         #endregion
     }
