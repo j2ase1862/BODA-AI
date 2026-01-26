@@ -17,4 +17,22 @@
     <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.0.20250507" />
   </ItemGroup>
 
+  <!-- Explicitly include XAML UserControls -->
+  <ItemGroup>
+    <Page Include="Controls\ImageCanvas.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Compile Include="Controls\ImageCanvas.xaml.cs">
+      <DependentUpon>ImageCanvas.xaml</DependentUpon>
+    </Compile>
+    <Page Include="Views\ToolSettings\ToolSettingsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Compile Include="Views\ToolSettings\ToolSettingsView.xaml.cs">
+      <DependentUpon>ToolSettingsView.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>
