@@ -2,6 +2,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using CvRect = OpenCvSharp.Rect;
+using CvPoint = OpenCvSharp.Point;
+using CvSize = OpenCvSharp.Size;
+using WpfPoint = System.Windows.Point;
 
 namespace BODA_VISION_AI.Models
 {
@@ -61,7 +65,7 @@ namespace BODA_VISION_AI.Models
         /// <summary>
         /// OpenCV Rect로 변환 (바운딩 박스)
         /// </summary>
-        public abstract Rect GetBoundingRect();
+        public abstract CvRect GetBoundingRect();
 
         /// <summary>
         /// OpenCV 마스크 이미지 생성
@@ -123,9 +127,9 @@ namespace BODA_VISION_AI.Models
             Height = height;
         }
 
-        public override Rect GetBoundingRect()
+        public override CvRect GetBoundingRect()
         {
-            return new Rect((int)X, (int)Y, (int)Width, (int)Height);
+            return new CvRect((int)X, (int)Y, (int)Width, (int)Height);
         }
 
         public override Mat CreateMask(int width, int height)
@@ -284,7 +288,7 @@ namespace BODA_VISION_AI.Models
             return corners;
         }
 
-        public override Rect GetBoundingRect()
+        public override CvRect GetBoundingRect()
         {
             var corners = GetCorners();
             double minX = double.MaxValue, minY = double.MaxValue;
@@ -298,7 +302,7 @@ namespace BODA_VISION_AI.Models
                 maxY = Math.Max(maxY, corner.Y);
             }
 
-            return new Rect((int)minX, (int)minY, (int)(maxX - minX), (int)(maxY - minY));
+            return new CvRect((int)minX, (int)minY, (int)(maxX - minX), (int)(maxY - minY));
         }
 
         public override Mat CreateMask(int width, int height)
@@ -442,9 +446,9 @@ namespace BODA_VISION_AI.Models
             Radius = radius;
         }
 
-        public override Rect GetBoundingRect()
+        public override CvRect GetBoundingRect()
         {
-            return new Rect(
+            return new CvRect(
                 (int)(CenterX - Radius),
                 (int)(CenterY - Radius),
                 (int)(Radius * 2),
@@ -542,7 +546,7 @@ namespace BODA_VISION_AI.Models
             Angle = angle;
         }
 
-        public override Rect GetBoundingRect()
+        public override CvRect GetBoundingRect()
         {
             // 회전된 타원의 바운딩 박스 계산
             double radians = Angle * Math.PI / 180.0;
@@ -557,7 +561,7 @@ namespace BODA_VISION_AI.Models
             double halfW = Math.Sqrt(a * a + b * b);
             double halfH = Math.Sqrt(c * c + d * d);
 
-            return new Rect(
+            return new CvRect(
                 (int)(CenterX - halfW),
                 (int)(CenterY - halfH),
                 (int)(halfW * 2),
@@ -669,10 +673,10 @@ namespace BODA_VISION_AI.Models
             Points = new List<System.Windows.Point>(points);
         }
 
-        public override Rect GetBoundingRect()
+        public override CvRect GetBoundingRect()
         {
             if (Points.Count == 0)
-                return new Rect();
+                return new CvRect();
 
             double minX = double.MaxValue, minY = double.MaxValue;
             double maxX = double.MinValue, maxY = double.MinValue;
@@ -685,7 +689,7 @@ namespace BODA_VISION_AI.Models
                 maxY = Math.Max(maxY, pt.Y);
             }
 
-            return new Rect((int)minX, (int)minY, (int)(maxX - minX), (int)(maxY - minY));
+            return new CvRect((int)minX, (int)minY, (int)(maxX - minX), (int)(maxY - minY));
         }
 
         public override Mat CreateMask(int width, int height)
