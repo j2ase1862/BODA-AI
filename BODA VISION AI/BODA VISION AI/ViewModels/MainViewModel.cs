@@ -80,6 +80,30 @@ namespace BODA_VISION_AI.ViewModels
             set => SetProperty(ref _resultImage, value);
         }
 
+        // ImageCanvas용 원본 Mat
+        public Mat? SourceMat => CurrentImage;
+
+        // ROI 컬렉션
+        private ObservableCollection<ROIShape>? _roiShapes;
+        public ObservableCollection<ROIShape>? ROIShapes
+        {
+            get => _roiShapes ??= new ObservableCollection<ROIShape>();
+            set => SetProperty(ref _roiShapes, value);
+        }
+
+        // 선택된 ROI
+        private ROIShape? _selectedROI;
+        public ROIShape? SelectedROI
+        {
+            get => _selectedROI;
+            set
+            {
+                SetProperty(ref _selectedROI, value);
+                // 선택된 ROI를 현재 도구에 적용
+                ApplyROIToSelectedTool();
+            }
+        }
+
         // 선택된 도구
         private ToolItem? _selectedTool;
         public ToolItem? SelectedTool
@@ -224,6 +248,7 @@ namespace BODA_VISION_AI.ViewModels
             try
             {
                 DisplayImage = CurrentImage.ToWriteableBitmap();
+                OnPropertyChanged(nameof(SourceMat));  // ImageCanvas에 이미지 변경 알림
             }
             catch
             {
@@ -423,13 +448,29 @@ namespace BODA_VISION_AI.ViewModels
                 return;
             }
 
-            // ROI 선택 또는 전체 이미지 사용
-            // 여기서는 간단하게 전체 이미지를 템플릿으로 사용
-            // 실제로는 ROI 선택 UI가 필요
+            // ROI가 선택되어 있으면 ROI 영역만 학습, 아니면 전체 이미지
+            Mat trainingImage = CurrentImage;
+
+            if (SelectedROI != null)
+            {
+                var rect = SelectedROI.GetBoundingRect();
+                // 이미지 범위 내로 클리핑
+                rect = new Rect(
+                    Math.Max(0, rect.X),
+                    Math.Max(0, rect.Y),
+                    Math.Min(rect.Width, CurrentImage.Width - rect.X),
+                    Math.Min(rect.Height, CurrentImage.Height - rect.Y));
+
+                if (rect.Width > 10 && rect.Height > 10)
+                {
+                    trainingImage = new Mat(CurrentImage, rect);
+                    StatusMessage = $"ROI 영역으로 학습 중... ({rect.Width}x{rect.Height})";
+                }
+            }
 
             if (SelectedVisionTool is TemplateMatchTool templateTool)
             {
-                if (templateTool.TrainPattern(CurrentImage))
+                if (templateTool.TrainPattern(trainingImage))
                 {
                     StatusMessage = "Template 학습 완료";
                 }
@@ -440,7 +481,7 @@ namespace BODA_VISION_AI.ViewModels
             }
             else if (SelectedVisionTool is FeatureMatchTool featureTool)
             {
-                if (featureTool.TrainPattern(CurrentImage))
+                if (featureTool.TrainPattern(trainingImage))
                 {
                     StatusMessage = "Feature 학습 완료";
                 }
@@ -450,6 +491,85 @@ namespace BODA_VISION_AI.ViewModels
                 }
             }
         }
+
+        #region ROI Methods
+
+        /// <summary>
+        /// ROI 생성 이벤트 처리
+        /// </summary>
+        public void OnROICreated(ROIShape roi)
+        {
+            StatusMessage = $"ROI 생성됨: {roi.Name} ({roi.ShapeType})";
+
+            // ROI가 생성되면 현재 선택된 도구에 자동 적용
+            if (SelectedVisionTool != null)
+            {
+                ApplyROIToTool(SelectedVisionTool, roi);
+            }
+        }
+
+        /// <summary>
+        /// ROI 수정 이벤트 처리
+        /// </summary>
+        public void OnROIModified(ROIShape roi)
+        {
+            // ROI가 수정되면 연결된 도구의 ROI도 업데이트
+            if (SelectedVisionTool != null && SelectedROI == roi)
+            {
+                ApplyROIToTool(SelectedVisionTool, roi);
+            }
+        }
+
+        /// <summary>
+        /// ROI 선택 변경 이벤트 처리
+        /// </summary>
+        public void OnROISelectionChanged(ROIShape? roi)
+        {
+            SelectedROI = roi;
+
+            if (roi != null)
+            {
+                StatusMessage = $"ROI 선택됨: {roi.Name}";
+            }
+        }
+
+        /// <summary>
+        /// 선택된 ROI를 현재 도구에 적용
+        /// </summary>
+        private void ApplyROIToSelectedTool()
+        {
+            if (SelectedVisionTool != null && SelectedROI != null)
+            {
+                ApplyROIToTool(SelectedVisionTool, SelectedROI);
+            }
+        }
+
+        /// <summary>
+        /// ROI를 특정 도구에 적용
+        /// </summary>
+        private void ApplyROIToTool(VisionToolBase tool, ROIShape roi)
+        {
+            var rect = roi.GetBoundingRect();
+            tool.ROI = rect;
+            tool.UseROI = true;
+
+            StatusMessage = $"ROI 적용됨: {tool.Name} - ({rect.X}, {rect.Y}, {rect.Width}, {rect.Height})";
+        }
+
+        /// <summary>
+        /// 선택된 도구의 ROI 해제
+        /// </summary>
+        public void ClearToolROI()
+        {
+            if (SelectedVisionTool != null)
+            {
+                SelectedVisionTool.UseROI = false;
+                StatusMessage = $"ROI 해제됨: {SelectedVisionTool.Name}";
+            }
+        }
+
+        #endregion
+
         #endregion
     }
 }

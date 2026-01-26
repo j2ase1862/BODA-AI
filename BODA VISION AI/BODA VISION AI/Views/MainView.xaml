@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BODA_VISION_AI"
         xmlns:ts="clr-namespace:BODA_VISION_AI.Views.ToolSettings"
+        xmlns:controls="clr-namespace:BODA_VISION_AI.Controls"
         mc:Ignorable="d"
         Title="BODA VISION AI - OpenCvSharp Vision System"
         WindowStartupLocation="Manual"
@@ -267,7 +268,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Original Image -->
+                    <!-- Original Image with ROI Editor -->
                     <Border Grid.Column="0" Background="#1E1E1E" Margin="5">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -275,11 +276,16 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Text="Original Image"
+                            <TextBlock Grid.Row="0" Text="Original Image (ROI Editor)"
                                        Foreground="Gray" FontSize="12" Margin="10,5"/>
-                            <Image Grid.Row="1" x:Name="OriginalImageDisplay"
-                                   Source="{Binding DisplayImage}"
-                                   Stretch="Uniform" Margin="5"/>
+                            <controls:ImageCanvas x:Name="ImageCanvasControl" Grid.Row="1"
+                                                  SourceImage="{Binding SourceMat, Mode=OneWay}"
+                                                  ROICollection="{Binding ROIShapes, Mode=TwoWay}"
+                                                  SelectedROI="{Binding SelectedROI, Mode=TwoWay}"
+                                                  ROICreated="ImageCanvas_ROICreated"
+                                                  ROIModified="ImageCanvas_ROIModified"
+                                                  ROISelectionChanged="ImageCanvas_ROISelectionChanged"
+                                                  Margin="5"/>
                         </Grid>
                     </Border>
 

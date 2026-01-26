@@ -23,6 +23,37 @@ namespace BODA_VISION_AI
             DataContext = new MainViewModel();
         }
 
+        #region ImageCanvas ROI Events
+
+        /// <summary>
+        /// ROI 생성 이벤트 처리
+        /// </summary>
+        private void ImageCanvas_ROICreated(object? sender, ROIShape roi)
+        {
+            var vm = DataContext as MainViewModel;
+            vm?.OnROICreated(roi);
+        }
+
+        /// <summary>
+        /// ROI 수정 이벤트 처리
+        /// </summary>
+        private void ImageCanvas_ROIModified(object? sender, ROIShape roi)
+        {
+            var vm = DataContext as MainViewModel;
+            vm?.OnROIModified(roi);
+        }
+
+        /// <summary>
+        /// ROI 선택 변경 이벤트 처리
+        /// </summary>
+        private void ImageCanvas_ROISelectionChanged(object? sender, ROIShape? roi)
+        {
+            var vm = DataContext as MainViewModel;
+            vm?.OnROISelectionChanged(roi);
+        }
+
+        #endregion
+
         /// <summary>
         /// 도구 드롭 처리
         /// </summary>
