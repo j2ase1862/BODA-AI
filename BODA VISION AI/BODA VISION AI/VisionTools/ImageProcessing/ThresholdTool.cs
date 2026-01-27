@@ -118,16 +118,32 @@ namespace BODA_VISION_AI.VisionTools.ImageProcessing
                     result.Data["Method"] = "Fixed";
                 }
 
-                result.Success = true;
-                result.Message = $"Threshold 처리 완료 (값: {calculatedThreshold:F1})";
-                result.OutputImage = outputImage;
-                result.Data["ThresholdValue"] = calculatedThreshold;
-                result.Data["ThresholdType"] = ThresholdType.ToString();
-
                 // 흰색 픽셀 수 계산
                 int whitePixels = Cv2.CountNonZero(outputImage);
+
+                // ROI가 사용된 경우 원본 이미지 크기로 결과 적용
+                Mat finalOutput;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    finalOutput = ApplyROIResult(inputImage, outputImage);
+                    outputImage.Dispose();
+                }
+                else
+                {
+                    finalOutput = outputImage;
+                }
+
+                result.Success = true;
+                result.Message = $"Threshold 처리 완료 (값: {calculatedThreshold:F1})";
+                result.OutputImage = finalOutput;
+                result.Data["ThresholdValue"] = calculatedThreshold;
+                result.Data["ThresholdType"] = ThresholdType.ToString();
                 result.Data["WhitePixelCount"] = whitePixels;
-                result.Data["WhitePixelRatio"] = (double)whitePixels / (outputImage.Width * outputImage.Height);
+                result.Data["WhitePixelRatio"] = (double)whitePixels / (finalOutput.Width * finalOutput.Height);
+                if (UseROI)
+                {
+                    result.Data["ROI"] = $"X:{ROI.X}, Y:{ROI.Y}, W:{ROI.Width}, H:{ROI.Height}";
+                }
 
                 grayImage.Dispose();
                 if (workImage != inputImage)

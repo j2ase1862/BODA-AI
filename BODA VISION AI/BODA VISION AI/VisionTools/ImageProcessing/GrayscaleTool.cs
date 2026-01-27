@@ -36,12 +36,28 @@ namespace BODA_VISION_AI.VisionTools.ImageProcessing
                     Cv2.CvtColor(workImage, outputImage, ColorConversionCodes.BGR2GRAY);
                 }
 
+                // ROI가 사용된 경우 원본 이미지 크기로 결과 적용
+                Mat finalOutput;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    finalOutput = ApplyROIResult(inputImage, outputImage);
+                    outputImage.Dispose();
+                }
+                else
+                {
+                    finalOutput = outputImage;
+                }
+
                 result.Success = true;
                 result.Message = "Grayscale 변환 완료";
-                result.OutputImage = outputImage;
-                result.Data["Channels"] = outputImage.Channels();
-                result.Data["Width"] = outputImage.Width;
-                result.Data["Height"] = outputImage.Height;
+                result.OutputImage = finalOutput;
+                result.Data["Channels"] = finalOutput.Channels();
+                result.Data["Width"] = finalOutput.Width;
+                result.Data["Height"] = finalOutput.Height;
+                if (UseROI)
+                {
+                    result.Data["ROI"] = $"X:{ROI.X}, Y:{ROI.Y}, W:{ROI.Width}, H:{ROI.Height}";
+                }
 
                 if (workImage != inputImage)
                     workImage.Dispose();

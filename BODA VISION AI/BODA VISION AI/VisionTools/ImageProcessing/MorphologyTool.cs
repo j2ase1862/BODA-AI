@@ -100,13 +100,29 @@ namespace BODA_VISION_AI.VisionTools.ImageProcessing
                         break;
                 }
 
+                // ROI가 사용된 경우 원본 이미지 크기로 결과 적용
+                Mat finalOutput;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    finalOutput = ApplyROIResult(inputImage, outputImage);
+                    outputImage.Dispose();
+                }
+                else
+                {
+                    finalOutput = outputImage;
+                }
+
                 result.Success = true;
                 result.Message = $"{Operation} 처리 완료 (Kernel: {KernelWidth}x{KernelHeight}, Iterations: {Iterations})";
-                result.OutputImage = outputImage;
+                result.OutputImage = finalOutput;
                 result.Data["Operation"] = Operation.ToString();
                 result.Data["KernelShape"] = KernelShape.ToString();
                 result.Data["KernelSize"] = $"{KernelWidth}x{KernelHeight}";
                 result.Data["Iterations"] = Iterations;
+                if (UseROI)
+                {
+                    result.Data["ROI"] = $"X:{ROI.X}, Y:{ROI.Y}, W:{ROI.Width}, H:{ROI.Height}";
+                }
 
                 kernel.Dispose();
                 if (workImage != inputImage)

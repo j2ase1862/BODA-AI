@@ -106,9 +106,26 @@ namespace BODA_VISION_AI.VisionTools.ImageProcessing
                         break;
                 }
 
+                // ROI가 사용된 경우 원본 이미지 크기로 결과 적용
+                // (Analyze 모드는 히스토그램 시각화이므로 제외)
+                Mat finalOutput;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0 && Operation != HistogramOperation.Analyze)
+                {
+                    finalOutput = ApplyROIResult(inputImage, outputImage);
+                    outputImage.Dispose();
+                }
+                else
+                {
+                    finalOutput = outputImage;
+                }
+
                 result.Success = true;
                 result.Message = $"{Operation} 처리 완료";
-                result.OutputImage = outputImage;
+                result.OutputImage = finalOutput;
+                if (UseROI)
+                {
+                    result.Data["ROI"] = $"X:{ROI.X}, Y:{ROI.Y}, W:{ROI.Width}, H:{ROI.Height}";
+                }
 
                 grayImage.Dispose();
                 if (workImage != inputImage)

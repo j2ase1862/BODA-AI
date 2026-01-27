@@ -95,11 +95,27 @@ namespace BODA_VISION_AI.VisionTools.ImageProcessing
                         break;
                 }
 
+                // ROI가 사용된 경우 원본 이미지 크기로 결과 적용
+                Mat finalOutput;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    finalOutput = ApplyROIResult(inputImage, outputImage);
+                    outputImage.Dispose();
+                }
+                else
+                {
+                    finalOutput = outputImage;
+                }
+
                 result.Success = true;
                 result.Message = $"{BlurType} Blur 완료 (Kernel: {KernelSize})";
-                result.OutputImage = outputImage;
+                result.OutputImage = finalOutput;
                 result.Data["BlurType"] = BlurType.ToString();
                 result.Data["KernelSize"] = KernelSize;
+                if (UseROI)
+                {
+                    result.Data["ROI"] = $"X:{ROI.X}, Y:{ROI.Y}, W:{ROI.Width}, H:{ROI.Height}";
+                }
 
                 if (workImage != inputImage)
                     workImage.Dispose();

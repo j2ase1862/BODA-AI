@@ -90,14 +90,61 @@ namespace BODA_VISION_AI.Models
                 return inputImage.Clone();
 
             // ROI가 이미지 범위를 벗어나지 않도록 조정
-            var adjustedROI = new Rect(
+            var adjustedROI = GetAdjustedROI(inputImage);
+
+            return new Mat(inputImage, adjustedROI);
+        }
+
+        /// <summary>
+        /// ROI를 이미지 범위에 맞게 조정하여 반환
+        /// </summary>
+        protected Rect GetAdjustedROI(Mat inputImage)
+        {
+            return new Rect(
                 Math.Max(0, ROI.X),
                 Math.Max(0, ROI.Y),
                 Math.Min(ROI.Width, inputImage.Width - Math.Max(0, ROI.X)),
                 Math.Min(ROI.Height, inputImage.Height - Math.Max(0, ROI.Y))
             );
+        }
 
-            return new Mat(inputImage, adjustedROI);
+        /// <summary>
+        /// 처리된 ROI 결과를 원본 이미지 크기에 맞게 적용
+        /// ROI 외부 영역은 검은색(또는 지정된 색상)으로 채움
+        /// </summary>
+        /// <param name="inputImage">원본 입력 이미지</param>
+        /// <param name="processedROI">처리된 ROI 이미지</param>
+        /// <param name="fillColor">ROI 외부 영역을 채울 색상 (기본값: 검은색)</param>
+        /// <returns>원본 크기의 이미지 (ROI 영역만 처리 결과 포함)</returns>
+        protected Mat ApplyROIResult(Mat inputImage, Mat processedROI, Scalar? fillColor = null)
+        {
+            if (!UseROI || ROI.Width <= 0 || ROI.Height <= 0)
+                return processedROI.Clone();
+
+            // 원본 이미지와 같은 크기의 결과 이미지 생성
+            var resultImage = new Mat(inputImage.Size(), processedROI.Type(), fillColor ?? Scalar.Black);
+
+            // ROI 위치 계산
+            var adjustedROI = GetAdjustedROI(inputImage);
+
+            // 처리된 ROI를 결과 이미지의 해당 위치에 복사
+            var destRegion = new Mat(resultImage, adjustedROI);
+
+            // processedROI 크기가 adjustedROI와 다를 수 있으므로 크기 맞춤
+            if (processedROI.Width == adjustedROI.Width && processedROI.Height == adjustedROI.Height)
+            {
+                processedROI.CopyTo(destRegion);
+            }
+            else
+            {
+                // 크기가 다른 경우 리사이즈
+                var resized = new Mat();
+                Cv2.Resize(processedROI, resized, new Size(adjustedROI.Width, adjustedROI.Height));
+                resized.CopyTo(destRegion);
+                resized.Dispose();
+            }
+
+            return resultImage;
         }
 
         /// <summary>
