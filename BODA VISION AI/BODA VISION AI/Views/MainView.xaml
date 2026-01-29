@@ -223,45 +223,99 @@
                         <TextBlock Grid.Row="0" Text="Tool Workspace (Drag tools here)"
                                    Foreground="Gray" FontSize="12" Margin="10,5"/>
 
-                        <ItemsControl x:Name="WorkspaceArea" Grid.Row="1"
-                                      ItemsSource="{Binding DroppedTools}"
-                                      AllowDrop="True"
-                                      Drop="Sidebar2_Drop"
-                                      Background="#2D2D30">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <Canvas IsItemsHost="True"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemContainerStyle>
-                                <Style TargetType="ContentPresenter">
-                                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
-                                </Style>
-                            </ItemsControl.ItemContainerStyle>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Style="{StaticResource ToolItemBorderStyle}"
-                                            MouseLeftButtonDown="Item_MouseLeftButtonDown"
-                                            MouseMove="Item_MouseMove"
-                                            MouseLeftButtonUp="Item_MouseLeftButtonUp"
-                                            MouseRightButtonDown="Item_MouseRightButtonDown">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding Name}"
-                                                       Foreground="White" FontWeight="SemiBold"
-                                                       VerticalAlignment="Center"/>
-                                            <Button Content="X"
-                                                    Command="{Binding DataContext.RemoveToolCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"
-                                                    Background="Transparent" Foreground="Red"
-                                                    BorderThickness="0" Padding="5,0"
-                                                    Margin="10,0,0,0" Cursor="Hand"
-                                                    FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <!-- 연결선 및 도구 워크스페이스 컨테이너 -->
+                        <Grid Grid.Row="1" AllowDrop="True" Drop="Sidebar2_Drop" Background="#2D2D30">
+                            <!-- 연결선 렌더링 캔버스 (도구 아래에 그려짐) -->
+                            <Canvas x:Name="ConnectionCanvas" IsHitTestVisible="False"/>
+
+                            <!-- 연결 모드 진행 중 안내 텍스트 -->
+                            <TextBlock x:Name="ConnectionModeHint"
+                                       Text=""
+                                       Foreground="#FFEB3B" FontSize="12" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Top"
+                                       Margin="0,5,0,0" Visibility="Collapsed"/>
+
+                            <!-- 도구 아이템 표시 -->
+                            <ItemsControl x:Name="WorkspaceArea"
+                                          ItemsSource="{Binding DroppedTools}"
+                                          Background="Transparent">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Canvas IsItemsHost="True"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style TargetType="ContentPresenter">
+                                        <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                        <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource ToolItemBorderStyle}"
+                                                MouseLeftButtonDown="Item_MouseLeftButtonDown"
+                                                MouseMove="Item_MouseMove"
+                                                MouseLeftButtonUp="Item_MouseLeftButtonUp"
+                                                MouseRightButtonDown="Item_MouseRightButtonDown">
+                                            <Border.ContextMenu>
+                                                <ContextMenu>
+                                                    <ContextMenu.Style>
+                                                        <Style TargetType="ContextMenu">
+                                                            <Setter Property="Background" Value="#2D2D30"/>
+                                                            <Setter Property="Foreground" Value="White"/>
+                                                            <Setter Property="BorderBrush" Value="#555555"/>
+                                                        </Style>
+                                                    </ContextMenu.Style>
+                                                    <MenuItem Header="Connect Image"
+                                                              Tag="Image"
+                                                              Click="ConnectMenuItem_Click">
+                                                        <MenuItem.Icon>
+                                                            <Ellipse Width="10" Height="10" Fill="#4CAF50"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Connect Coordinates"
+                                                              Tag="Coordinates"
+                                                              Click="ConnectMenuItem_Click">
+                                                        <MenuItem.Icon>
+                                                            <Ellipse Width="10" Height="10" Fill="#2196F3"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Connect Result"
+                                                              Tag="Result"
+                                                              Click="ConnectMenuItem_Click">
+                                                        <MenuItem.Icon>
+                                                            <Ellipse Width="10" Height="10" Fill="#FF9800"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <Separator Background="#555555"/>
+                                                    <MenuItem Header="Remove Connections"
+                                                              Click="RemoveConnectionsMenuItem_Click"/>
+                                                    <Separator Background="#555555"/>
+                                                    <MenuItem Header="Delete Tool"
+                                                              Click="DeleteToolMenuItem_Click"
+                                                              Foreground="#FF5252"/>
+                                                </ContextMenu>
+                                            </Border.ContextMenu>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Name}"
+                                                           Foreground="White" FontWeight="SemiBold"
+                                                           VerticalAlignment="Center"/>
+                                                <Button Content="X"
+                                                        Command="{Binding DataContext.RemoveToolCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        Background="Transparent" Foreground="Red"
+                                                        BorderThickness="0" Padding="5,0"
+                                                        Margin="10,0,0,0" Cursor="Hand"
+                                                        FontWeight="Bold"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- 연결 모드에서 임시 연결선 표시 캔버스 -->
+                            <Canvas x:Name="TempConnectionCanvas" IsHitTestVisible="False"/>
+                        </Grid>
                     </Grid>
                 </Border>
 

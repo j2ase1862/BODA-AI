@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.ObjectModel;
 
 namespace BODA_VISION_AI.Models
@@ -8,6 +9,11 @@ namespace BODA_VISION_AI.Models
     /// </summary>
     public class ToolItem : ObservableObject
     {
+        /// <summary>
+        /// 도구 고유 ID (연결선 식별용)
+        /// </summary>
+        public string Id { get; } = Guid.NewGuid().ToString();
+
         private string _name = string.Empty;
         public string Name
         {

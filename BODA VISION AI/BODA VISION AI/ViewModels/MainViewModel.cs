@@ -43,6 +43,9 @@ namespace BODA_VISION_AI.ViewModels
         // 실행 결과
         public ObservableCollection<VisionResult> Results => VisionService.Instance.Results;
 
+        // 도구 간 연결선 목록
+        public ObservableCollection<ToolConnection> Connections { get; } = new();
+
         // 현재 이미지
         public Mat? CurrentImage
         {
@@ -374,6 +377,7 @@ namespace BODA_VISION_AI.ViewModels
         /// </summary>
         private void ClearAllTools()
         {
+            ClearAllConnections();
             DroppedTools.Clear();
             VisionService.Instance.ClearTools();
             SelectedTool = null;
@@ -387,6 +391,9 @@ namespace BODA_VISION_AI.ViewModels
         {
             if (tool == null) return;
 
+            // 해당 도구와 관련된 연결선 모두 제거
+            RemoveConnectionsForTool(tool);
+
             if (tool.VisionTool != null)
                 VisionService.Instance.RemoveTool(tool.VisionTool);
 
@@ -395,6 +402,80 @@ namespace BODA_VISION_AI.ViewModels
             if (SelectedTool == tool)
                 SelectedTool = null;
         }
+
+        #region Connection Management
+
+        /// <summary>
+        /// 도구 간 연결 추가
+        /// </summary>
+        public void AddConnection(ToolItem source, ToolItem target, ConnectionType type)
+        {
+            // 중복 연결 방지 (같은 소스, 타겟, 타입)
+            var existing = Connections.FirstOrDefault(c =>
+                c.SourceToolItem?.Id == source.Id &&
+                c.TargetToolItem?.Id == target.Id &&
+                c.Type == type);
+
+            if (existing != null)
+            {
+                StatusMessage = $"이미 동일한 연결이 존재합니다: {source.Name} → {target.Name} ({type})";
+                return;
+            }
+
+            var connection = new ToolConnection
+            {
+                SourceToolItem = source,
+                TargetToolItem = target,
+                Type = type
+            };
+
+            Connections.Add(connection);
+
+            // VisionService에 연결 정보 등록
+            if (source.VisionTool != null && target.VisionTool != null)
+            {
+                VisionService.Instance.AddConnection(source.VisionTool, target.VisionTool, type);
+            }
+
+            StatusMessage = $"연결 생성됨: {source.Name} → {target.Name} ({type})";
+        }
+
+        /// <summary>
+        /// 특정 도구의 모든 연결 제거
+        /// </summary>
+        public void RemoveConnectionsForTool(ToolItem tool)
+        {
+            var toRemove = Connections
+                .Where(c => c.SourceToolItem?.Id == tool.Id || c.TargetToolItem?.Id == tool.Id)
+                .ToList();
+
+            foreach (var conn in toRemove)
+            {
+                // VisionService에서도 제거
+                if (conn.SourceToolItem?.VisionTool != null && conn.TargetToolItem?.VisionTool != null)
+                {
+                    VisionService.Instance.RemoveConnection(
+                        conn.SourceToolItem.VisionTool,
+                        conn.TargetToolItem.VisionTool,
+                        conn.Type);
+                }
+                Connections.Remove(conn);
+            }
+
+            if (toRemove.Count > 0)
+                StatusMessage = $"{tool.Name}의 연결 {toRemove.Count}개가 제거되었습니다.";
+        }
+
+        /// <summary>
+        /// 모든 연결 제거
+        /// </summary>
+        private void ClearAllConnections()
+        {
+            Connections.Clear();
+            VisionService.Instance.ClearConnections();
+        }
+
+        #endregion
 
         /// <summary>
         /// 도구 순서 위로 이동

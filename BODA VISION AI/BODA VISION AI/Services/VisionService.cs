@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -59,6 +60,19 @@ namespace BODA_VISION_AI.Services
 
         // 실행 결과 목록
         public ObservableCollection<VisionResult> Results { get; } = new();
+
+        // 도구 간 연결 정보
+        private readonly List<ToolConnectionInfo> _connections = new();
+
+        /// <summary>
+        /// 도구 간 연결 정보 (내부용)
+        /// </summary>
+        private class ToolConnectionInfo
+        {
+            public VisionToolBase Source { get; set; } = null!;
+            public VisionToolBase Target { get; set; } = null!;
+            public ConnectionType Type { get; set; }
+        }
 
         // 전체 실행 시간
         private double _totalExecutionTime;
@@ -169,7 +183,135 @@ namespace BODA_VISION_AI.Services
         public void ClearTools()
         {
             Tools.Clear();
+            _connections.Clear();
         }
+
+        #region Connection Management
+
+        /// <summary>
+        /// 도구 간 연결 추가
+        /// </summary>
+        public void AddConnection(VisionToolBase source, VisionToolBase target, ConnectionType type)
+        {
+            // 중복 방지
+            if (_connections.Any(c => c.Source == source && c.Target == target && c.Type == type))
+                return;
+
+            _connections.Add(new ToolConnectionInfo
+            {
+                Source = source,
+                Target = target,
+                Type = type
+            });
+        }
+
+        /// <summary>
+        /// 도구 간 연결 제거
+        /// </summary>
+        public void RemoveConnection(VisionToolBase source, VisionToolBase target, ConnectionType type)
+        {
+            _connections.RemoveAll(c => c.Source == source && c.Target == target && c.Type == type);
+        }
+
+        /// <summary>
+        /// 모든 연결 제거
+        /// </summary>
+        public void ClearConnections()
+        {
+            _connections.Clear();
+        }
+
+        /// <summary>
+        /// 특정 도구에 대한 입력 연결 가져오기 (해당 도구가 Target인 연결들)
+        /// </summary>
+        private List<ToolConnectionInfo> GetInputConnections(VisionToolBase tool)
+        {
+            return _connections.Where(c => c.Target == tool).ToList();
+        }
+
+        /// <summary>
+        /// 연결 정보를 기반으로 도구의 입력 이미지 결정
+        /// </summary>
+        private Mat? GetConnectedInputImage(VisionToolBase tool, Dictionary<VisionToolBase, VisionResult> resultMap)
+        {
+            var imageConnection = _connections
+                .FirstOrDefault(c => c.Target == tool && c.Type == ConnectionType.Image);
+
+            if (imageConnection != null && resultMap.TryGetValue(imageConnection.Source, out var sourceResult))
+            {
+                // Image 연결: Source 도구의 출력 이미지를 사용
+                if (sourceResult.OutputImage != null && !sourceResult.OutputImage.Empty())
+                    return sourceResult.OutputImage.Clone();
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Result 연결 확인: 연결된 Source 도구의 결과가 실패이면 실행 건너뛰기
+        /// </summary>
+        private bool ShouldSkipByResultConnection(VisionToolBase tool, Dictionary<VisionToolBase, VisionResult> resultMap)
+        {
+            var resultConnections = _connections
+                .Where(c => c.Target == tool && c.Type == ConnectionType.Result)
+                .ToList();
+
+            foreach (var conn in resultConnections)
+            {
+                if (resultMap.TryGetValue(conn.Source, out var sourceResult))
+                {
+                    // Result 연결: Source가 실패이면 Target도 건너뜀
+                    if (!sourceResult.Success)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Coordinates 연결: Source 도구의 좌표 데이터를 Target 도구에 적용
+        /// </summary>
+        private void ApplyCoordinatesConnection(VisionToolBase tool, Dictionary<VisionToolBase, VisionResult> resultMap)
+        {
+            var coordConnections = _connections
+                .Where(c => c.Target == tool && c.Type == ConnectionType.Coordinates)
+                .ToList();
+
+            foreach (var conn in coordConnections)
+            {
+                if (resultMap.TryGetValue(conn.Source, out var sourceResult) && sourceResult.Data != null)
+                {
+                    // 좌표 데이터 전달: Source의 Data에서 좌표 추출 → Target의 ROI에 적용
+                    if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
+                        sourceResult.Data.TryGetValue("CenterY", out var cy))
+                    {
+                        double centerX = Convert.ToDouble(cx);
+                        double centerY = Convert.ToDouble(cy);
+
+                        // 좌표를 기반으로 ROI 설정 (중심점 기준 기존 ROI 크기 유지)
+                        int roiWidth = tool.ROI.Width > 0 ? tool.ROI.Width : 100;
+                        int roiHeight = tool.ROI.Height > 0 ? tool.ROI.Height : 100;
+
+                        tool.ROI = new Rect(
+                            (int)(centerX - roiWidth / 2),
+                            (int)(centerY - roiHeight / 2),
+                            roiWidth,
+                            roiHeight);
+                        tool.UseROI = true;
+                    }
+
+                    // BoundingRect가 있으면 직접 ROI로 사용
+                    if (sourceResult.Data.TryGetValue("BoundingRect", out var rectObj) && rectObj is Rect boundingRect)
+                    {
+                        tool.ROI = boundingRect;
+                        tool.UseROI = true;
+                    }
+                }
+            }
+        }
+
+        #endregion
 
         /// <summary>
         /// 단일 도구 실행
@@ -209,6 +351,8 @@ namespace BODA_VISION_AI.Services
 
         /// <summary>
         /// 모든 도구 순차 실행 (동기)
+        /// 연결선이 있는 경우 연결에 따라 데이터를 전달하고,
+        /// 연결이 없는 경우 기존 순차 파이프라인 방식으로 동작
         /// </summary>
         public List<VisionResult> ExecuteAll()
         {
@@ -231,6 +375,8 @@ namespace BODA_VISION_AI.Services
             IsRunning = true;
             var sw = Stopwatch.StartNew();
 
+            // 각 도구의 실행 결과를 추적 (연결 데이터 전달용)
+            var resultMap = new Dictionary<VisionToolBase, VisionResult>();
             Mat workingImage = CurrentImage.Clone();
             bool allSuccess = true;
 
@@ -241,26 +387,66 @@ namespace BODA_VISION_AI.Services
                     if (!tool.IsEnabled)
                         continue;
 
-                    var result = tool.Execute(workingImage);
-                    results.Add(result);
-                    Results.Add(result);
-
-                    if (!result.Success)
+                    // 1. Result 연결 확인: Source가 실패이면 건너뛰기
+                    if (ShouldSkipByResultConnection(tool, resultMap))
                     {
+                        var skipResult = new VisionResult
+                        {
+                            Success = false,
+                            Message = $"연결된 도구의 결과가 실패하여 건너뜀: {tool.Name}"
+                        };
+                        results.Add(skipResult);
+                        Results.Add(skipResult);
+                        resultMap[tool] = skipResult;
                         allSuccess = false;
+                        continue;
                     }
 
-                    // 출력 이미지가 있으면 다음 도구의 입력으로 사용
-                    if (result.OutputImage != null && !result.OutputImage.Empty())
+                    // 2. Coordinates 연결: Source의 좌표 데이터를 현재 도구에 적용
+                    ApplyCoordinatesConnection(tool, resultMap);
+
+                    // 3. Image 연결: 연결된 Source의 출력 이미지를 입력으로 사용
+                    Mat inputImage;
+                    var connectedImage = GetConnectedInputImage(tool, resultMap);
+                    if (connectedImage != null)
                     {
-                        workingImage.Dispose();
-                        workingImage = result.OutputImage.Clone();
+                        inputImage = connectedImage;
+                    }
+                    else
+                    {
+                        // 연결이 없으면 기존 방식: 이전 도구의 출력(workingImage) 사용
+                        inputImage = workingImage.Clone();
                     }
 
-                    // 오버레이 이미지 업데이트
-                    if (result.OverlayImage != null && !result.OverlayImage.Empty())
+                    try
                     {
-                        OverlayImage = result.OverlayImage.ToWriteableBitmap();
+                        var result = tool.Execute(inputImage);
+                        results.Add(result);
+                        Results.Add(result);
+                        resultMap[tool] = result;
+
+                        if (!result.Success)
+                        {
+                            allSuccess = false;
+                        }
+
+                        // Image 연결이 없는 경우에만 기존 파이프라인 유지
+                        if (connectedImage == null && result.OutputImage != null && !result.OutputImage.Empty())
+                        {
+                            workingImage.Dispose();
+                            workingImage = result.OutputImage.Clone();
+                        }
+
+                        // 오버레이 이미지 업데이트
+                        if (result.OverlayImage != null && !result.OverlayImage.Empty())
+                        {
+                            OverlayImage = result.OverlayImage.ToWriteableBitmap();
+                        }
+                    }
+                    finally
+                    {
+                        if (connectedImage != null)
+                            inputImage.Dispose();
                     }
                 }
             }
