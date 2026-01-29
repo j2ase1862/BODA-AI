@@ -10,6 +10,11 @@ namespace BODA_VISION_AI.Models
     /// </summary>
     public abstract class VisionToolBase : ObservableObject
     {
+        /// <summary>
+        /// 도구 고유 ID (연결선 매칭용)
+        /// </summary>
+        public string Id { get; } = Guid.NewGuid().ToString();
+
         private string _name = string.Empty;
         public string Name
         {

@@ -66,11 +66,12 @@ namespace BODA_VISION_AI.Services
 
         /// <summary>
         /// 도구 간 연결 정보 (내부용)
+        /// ID 기반 매칭으로 백그라운드 스레드에서도 안정적으로 동작
         /// </summary>
         private class ToolConnectionInfo
         {
-            public VisionToolBase Source { get; set; } = null!;
-            public VisionToolBase Target { get; set; } = null!;
+            public string SourceId { get; set; } = string.Empty;
+            public string TargetId { get; set; } = string.Empty;
             public ConnectionType Type { get; set; }
         }
 
@@ -193,14 +194,14 @@ namespace BODA_VISION_AI.Services
         /// </summary>
         public void AddConnection(VisionToolBase source, VisionToolBase target, ConnectionType type)
         {
-            // 중복 방지
-            if (_connections.Any(c => c.Source == source && c.Target == target && c.Type == type))
+            // 중복 방지 (ID 기반)
+            if (_connections.Any(c => c.SourceId == source.Id && c.TargetId == target.Id && c.Type == type))
                 return;
 
             _connections.Add(new ToolConnectionInfo
             {
-                Source = source,
-                Target = target,
+                SourceId = source.Id,
+                TargetId = target.Id,
                 Type = type
             });
         }
@@ -210,7 +211,7 @@ namespace BODA_VISION_AI.Services
         /// </summary>
         public void RemoveConnection(VisionToolBase source, VisionToolBase target, ConnectionType type)
         {
-            _connections.RemoveAll(c => c.Source == source && c.Target == target && c.Type == type);
+            _connections.RemoveAll(c => c.SourceId == source.Id && c.TargetId == target.Id && c.Type == type);
         }
 
         /// <summary>
@@ -226,18 +227,19 @@ namespace BODA_VISION_AI.Services
         /// </summary>
         private List<ToolConnectionInfo> GetInputConnections(VisionToolBase tool)
         {
-            return _connections.Where(c => c.Target == tool).ToList();
+            return _connections.Where(c => c.TargetId == tool.Id).ToList();
         }
 
         /// <summary>
         /// 연결 정보를 기반으로 도구의 입력 이미지 결정
+        /// ID 기반으로 Source 도구를 찾아 결과 이미지를 반환
         /// </summary>
-        private Mat? GetConnectedInputImage(VisionToolBase tool, Dictionary<VisionToolBase, VisionResult> resultMap)
+        private Mat? GetConnectedInputImage(VisionToolBase tool, Dictionary<string, VisionResult> resultMap)
         {
             var imageConnection = _connections
-                .FirstOrDefault(c => c.Target == tool && c.Type == ConnectionType.Image);
+                .FirstOrDefault(c => c.TargetId == tool.Id && c.Type == ConnectionType.Image);
 
-            if (imageConnection != null && resultMap.TryGetValue(imageConnection.Source, out var sourceResult))
+            if (imageConnection != null && resultMap.TryGetValue(imageConnection.SourceId, out var sourceResult))
             {
                 // Image 연결: Source 도구의 출력 이미지를 사용
                 if (sourceResult.OutputImage != null && !sourceResult.OutputImage.Empty())
@@ -250,15 +252,15 @@ namespace BODA_VISION_AI.Services
         /// <summary>
         /// Result 연결 확인: 연결된 Source 도구의 결과가 실패이면 실행 건너뛰기
         /// </summary>
-        private bool ShouldSkipByResultConnection(VisionToolBase tool, Dictionary<VisionToolBase, VisionResult> resultMap)
+        private bool ShouldSkipByResultConnection(VisionToolBase tool, Dictionary<string, VisionResult> resultMap)
         {
             var resultConnections = _connections
-                .Where(c => c.Target == tool && c.Type == ConnectionType.Result)
+                .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Result)
                 .ToList();
 
             foreach (var conn in resultConnections)
             {
-                if (resultMap.TryGetValue(conn.Source, out var sourceResult))
+                if (resultMap.TryGetValue(conn.SourceId, out var sourceResult))
                 {
                     // Result 연결: Source가 실패이면 Target도 건너뜀
                     if (!sourceResult.Success)
@@ -272,15 +274,15 @@ namespace BODA_VISION_AI.Services
         /// <summary>
         /// Coordinates 연결: Source 도구의 좌표 데이터를 Target 도구에 적용
         /// </summary>
-        private void ApplyCoordinatesConnection(VisionToolBase tool, Dictionary<VisionToolBase, VisionResult> resultMap)
+        private void ApplyCoordinatesConnection(VisionToolBase tool, Dictionary<string, VisionResult> resultMap)
         {
             var coordConnections = _connections
-                .Where(c => c.Target == tool && c.Type == ConnectionType.Coordinates)
+                .Where(c => c.TargetId == tool.Id && c.Type == ConnectionType.Coordinates)
                 .ToList();
 
             foreach (var conn in coordConnections)
             {
-                if (resultMap.TryGetValue(conn.Source, out var sourceResult) && sourceResult.Data != null)
+                if (resultMap.TryGetValue(conn.SourceId, out var sourceResult) && sourceResult.Data != null)
                 {
                     // 좌표 데이터 전달: Source의 Data에서 좌표 추출 → Target의 ROI에 적용
                     if (sourceResult.Data.TryGetValue("CenterX", out var cx) &&
@@ -375,8 +377,8 @@ namespace BODA_VISION_AI.Services
             IsRunning = true;
             var sw = Stopwatch.StartNew();
 
-            // 각 도구의 실행 결과를 추적 (연결 데이터 전달용)
-            var resultMap = new Dictionary<VisionToolBase, VisionResult>();
+            // 각 도구의 실행 결과를 추적 (ID 기반, 연결 데이터 전달용)
+            var resultMap = new Dictionary<string, VisionResult>();
             Mat workingImage = CurrentImage.Clone();
             bool allSuccess = true;
 
@@ -397,7 +399,7 @@ namespace BODA_VISION_AI.Services
                         };
                         results.Add(skipResult);
                         Results.Add(skipResult);
-                        resultMap[tool] = skipResult;
+                        resultMap[tool.Id] = skipResult;
                         allSuccess = false;
                         continue;
                     }
@@ -423,7 +425,7 @@ namespace BODA_VISION_AI.Services
                         var result = tool.Execute(inputImage);
                         results.Add(result);
                         Results.Add(result);
-                        resultMap[tool] = result;
+                        resultMap[tool.Id] = result;
 
                         if (!result.Success)
                         {
