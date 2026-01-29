@@ -237,51 +237,88 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
                 if (blobs.Count > MaxBlobCount)
                     blobs = blobs.Take(MaxBlobCount).ToList();
 
+                // ROI 오프셋 계산 (ROI 좌표계 → 원본 이미지 좌표계 변환용)
+                int offsetX = 0, offsetY = 0;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    var adjustedROI = GetAdjustedROI(inputImage);
+                    offsetX = adjustedROI.X;
+                    offsetY = adjustedROI.Y;
+                }
+
                 // 결과 이미지 생성
                 Mat overlayImage = inputImage.Clone();
                 if (overlayImage.Channels() == 1)
                     Cv2.CvtColor(overlayImage, overlayImage, ColorConversionCodes.GRAY2BGR);
+
+                // ROI 영역 표시
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    var adjustedROI = GetAdjustedROI(inputImage);
+                    Cv2.Rectangle(overlayImage, adjustedROI, new Scalar(0, 200, 200), 2);
+                }
 
                 for (int i = 0; i < blobs.Count; i++)
                 {
                     var blob = blobs[i];
                     var color = GetBlobColor(i);
 
+                    // ROI 오프셋을 적용한 contour 좌표
+                    Point[] offsetContour = OffsetPoints(blob.Contour, offsetX, offsetY);
+
                     if (DrawContours)
                     {
-                        Cv2.DrawContours(overlayImage, new[] { blob.Contour }, 0, color, 2);
+                        Cv2.DrawContours(overlayImage, new[] { offsetContour }, 0, color, 2);
                     }
 
                     if (DrawBoundingBox)
                     {
-                        Cv2.Rectangle(overlayImage, blob.BoundingRect, new Scalar(255, 255, 0), 1);
+                        var offsetRect = new Rect(
+                            blob.BoundingRect.X + offsetX,
+                            blob.BoundingRect.Y + offsetY,
+                            blob.BoundingRect.Width,
+                            blob.BoundingRect.Height);
+                        Cv2.Rectangle(overlayImage, offsetRect, new Scalar(255, 255, 0), 1);
                     }
 
                     if (DrawCenterPoint)
                     {
-                        Cv2.DrawMarker(overlayImage, new Point((int)blob.CenterX, (int)blob.CenterY),
+                        Cv2.DrawMarker(overlayImage,
+                            new Point((int)blob.CenterX + offsetX, (int)blob.CenterY + offsetY),
                             new Scalar(0, 0, 255), MarkerTypes.Cross, 10, 2);
                     }
 
                     if (DrawLabels)
                     {
                         Cv2.PutText(overlayImage, $"#{i}",
-                            new Point((int)blob.CenterX + 5, (int)blob.CenterY - 5),
+                            new Point((int)blob.CenterX + offsetX + 5, (int)blob.CenterY + offsetY - 5),
                             HersheyFonts.HersheySimplex, 0.4, new Scalar(255, 255, 255), 1);
                     }
 
-                    // Graphics 추가
+                    // Graphics 추가 (오프셋 적용된 좌표)
                     result.Graphics.Add(new GraphicOverlay
                     {
                         Type = GraphicType.Polygon,
-                        Points = blob.Contour.ToList(),
+                        Points = offsetContour.ToList(),
                         Color = color
                     });
                 }
 
+                // ROI가 사용된 경우 이진화 이미지도 원본 크기로 적용
+                Mat finalBinary;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    finalBinary = ApplyROIResult(inputImage, binaryImage);
+                    binaryImage.Dispose();
+                }
+                else
+                {
+                    finalBinary = binaryImage;
+                }
+
                 result.Success = blobs.Count > 0;
                 result.Message = $"Blob 검출 완료: {blobs.Count}개";
-                result.OutputImage = binaryImage;
+                result.OutputImage = finalBinary;
                 result.OverlayImage = overlayImage;
                 result.Data["BlobCount"] = blobs.Count;
                 result.Data["Blobs"] = blobs;
@@ -397,6 +434,19 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
                 sorted = sorted.Reverse();
 
             return sorted.ToList();
+        }
+
+        private static Point[] OffsetPoints(Point[] points, int offsetX, int offsetY)
+        {
+            if (offsetX == 0 && offsetY == 0)
+                return points;
+
+            var result = new Point[points.Length];
+            for (int i = 0; i < points.Length; i++)
+            {
+                result[i] = new Point(points[i].X + offsetX, points[i].Y + offsetY);
+            }
+            return result;
         }
 
         private Scalar GetBlobColor(int index)

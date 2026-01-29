@@ -204,8 +204,17 @@ namespace BODA_VISION_AI.VisionTools.PatternMatching
                             detectedCorners[1].Y - detectedCorners[0].Y,
                             detectedCorners[1].X - detectedCorners[0].X) * 180 / Math.PI;
 
-                        result.Data["CenterX"] = centerX;
-                        result.Data["CenterY"] = centerY;
+                        // ROI 오프셋 계산
+                        int offsetX = 0, offsetY = 0;
+                        if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                        {
+                            var adjustedROI = GetAdjustedROI(inputImage);
+                            offsetX = adjustedROI.X;
+                            offsetY = adjustedROI.Y;
+                        }
+
+                        result.Data["CenterX"] = centerX + offsetX;
+                        result.Data["CenterY"] = centerY + offsetY;
                         result.Data["Scale"] = scale;
                         result.Data["Angle"] = angle;
                         result.Data["DetectedCorners"] = detectedCorners;
@@ -213,15 +222,21 @@ namespace BODA_VISION_AI.VisionTools.PatternMatching
                         // 결과 이미지 생성
                         Mat overlayImage = inputImage.Clone();
 
-                        // 검출된 영역 표시
-                        var corners = detectedCorners.Select(p => new Point((int)p.X, (int)p.Y)).ToArray();
+                        // ROI 영역 표시
+                        if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                        {
+                            Cv2.Rectangle(overlayImage, GetAdjustedROI(inputImage), new Scalar(0, 200, 200), 2);
+                        }
+
+                        // 검출된 영역 표시 (오프셋 적용)
+                        var corners = detectedCorners.Select(p => new Point((int)p.X + offsetX, (int)p.Y + offsetY)).ToArray();
                         Cv2.Polylines(overlayImage, new[] { corners }, true, new Scalar(0, 255, 0), 2);
 
-                        // 중심점 표시
-                        Cv2.DrawMarker(overlayImage, new Point((int)centerX, (int)centerY),
+                        // 중심점 표시 (오프셋 적용)
+                        Cv2.DrawMarker(overlayImage, new Point((int)centerX + offsetX, (int)centerY + offsetY),
                             new Scalar(0, 0, 255), MarkerTypes.Cross, 30, 2);
 
-                        // Graphics 추가
+                        // Graphics 추가 (오프셋 적용된 좌표)
                         result.Graphics.Add(new GraphicOverlay
                         {
                             Type = GraphicType.Polygon,
@@ -232,7 +247,7 @@ namespace BODA_VISION_AI.VisionTools.PatternMatching
                         result.Graphics.Add(new GraphicOverlay
                         {
                             Type = GraphicType.Crosshair,
-                            Position = new Point2d(centerX, centerY),
+                            Position = new Point2d(centerX + offsetX, centerY + offsetY),
                             Color = new Scalar(0, 0, 255)
                         });
 
@@ -258,7 +273,18 @@ namespace BODA_VISION_AI.VisionTools.PatternMatching
                     result.Message = $"매칭 부족: {goodMatches.Count}개 (최소 {MinMatchCount}개 필요)";
                 }
 
-                result.OutputImage = workImage;
+                // ROI가 사용된 경우 OutputImage도 원본 크기로 적용
+                Mat finalOutput;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    finalOutput = ApplyROIResult(inputImage, workImage);
+                }
+                else
+                {
+                    finalOutput = workImage;
+                }
+
+                result.OutputImage = finalOutput;
 
                 graySearch.Dispose();
                 searchDescriptors.Dispose();

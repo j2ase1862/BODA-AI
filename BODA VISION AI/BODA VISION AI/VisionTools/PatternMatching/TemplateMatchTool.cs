@@ -198,32 +198,54 @@ namespace BODA_VISION_AI.VisionTools.PatternMatching
                 matches = ApplyNonMaximumSuppression(matches);
                 matches = matches.Take(MaxResults).ToList();
 
+                // ROI 오프셋 계산
+                int offsetX = 0, offsetY = 0;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    var adjustedROI = GetAdjustedROI(inputImage);
+                    offsetX = adjustedROI.X;
+                    offsetY = adjustedROI.Y;
+                }
+
                 // 결과 이미지에 매칭 위치 표시
                 Mat overlayImage = inputImage.Clone();
+
+                // ROI 영역 표시
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    Cv2.Rectangle(overlayImage, GetAdjustedROI(inputImage), new Scalar(0, 200, 200), 2);
+                }
+
                 foreach (var match in matches)
                 {
+                    // ROI 오프셋 적용
+                    double drawX = match.X + offsetX;
+                    double drawY = match.Y + offsetY;
+                    double drawCenterX = match.CenterX + offsetX;
+                    double drawCenterY = match.CenterY + offsetY;
+
                     // 매칭 영역 사각형
                     Cv2.Rectangle(overlayImage,
-                        new Point((int)match.X, (int)match.Y),
-                        new Point((int)(match.X + match.Width), (int)(match.Y + match.Height)),
+                        new Point((int)drawX, (int)drawY),
+                        new Point((int)(drawX + match.Width), (int)(drawY + match.Height)),
                         new Scalar(0, 255, 0), 2);
 
                     // 중심점 표시
                     Cv2.DrawMarker(overlayImage,
-                        new Point((int)match.CenterX, (int)match.CenterY),
+                        new Point((int)drawCenterX, (int)drawCenterY),
                         new Scalar(0, 0, 255), MarkerTypes.Cross, 20, 2);
 
                     // 점수 표시
                     Cv2.PutText(overlayImage,
                         $"{match.Score:F2}",
-                        new Point((int)match.X, (int)match.Y - 5),
+                        new Point((int)drawX, (int)drawY - 5),
                         HersheyFonts.HersheySimplex, 0.5, new Scalar(255, 255, 0), 1);
 
-                    // Graphics 추가
+                    // Graphics 추가 (오프셋 적용된 좌표)
                     result.Graphics.Add(new GraphicOverlay
                     {
                         Type = GraphicType.Rectangle,
-                        Position = new Point2d(match.X, match.Y),
+                        Position = new Point2d(drawX, drawY),
                         Width = match.Width,
                         Height = match.Height,
                         Color = new Scalar(0, 255, 0)
@@ -232,14 +254,25 @@ namespace BODA_VISION_AI.VisionTools.PatternMatching
                     result.Graphics.Add(new GraphicOverlay
                     {
                         Type = GraphicType.Crosshair,
-                        Position = new Point2d(match.CenterX, match.CenterY),
+                        Position = new Point2d(drawCenterX, drawCenterY),
                         Color = new Scalar(0, 0, 255)
                     });
                 }
 
+                // ROI가 사용된 경우 OutputImage도 원본 크기로 적용
+                Mat finalOutput;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    finalOutput = ApplyROIResult(inputImage, workImage);
+                }
+                else
+                {
+                    finalOutput = workImage;
+                }
+
                 result.Success = matches.Count > 0;
                 result.Message = $"매칭 완료: {matches.Count}개 발견";
-                result.OutputImage = workImage;
+                result.OutputImage = finalOutput;
                 result.OverlayImage = overlayImage;
                 result.Data["MatchCount"] = matches.Count;
                 result.Data["Matches"] = matches;
