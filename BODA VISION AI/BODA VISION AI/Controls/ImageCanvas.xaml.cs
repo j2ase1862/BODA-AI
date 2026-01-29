@@ -856,12 +856,10 @@ namespace BODA_VISION_AI.Controls
         {
             if (ROICollection != null)
             {
-                foreach (var roi in ROICollection.ToList())
-                {
-                    ClearROIVisuals(roi);
-                }
                 ROICollection.Clear();
                 SelectedROI = null;
+                _roiVisuals.Clear();
+                DrawingCanvas.Children.Clear();
                 StatusText.Text = "모든 ROI가 삭제되었습니다";
             }
         }

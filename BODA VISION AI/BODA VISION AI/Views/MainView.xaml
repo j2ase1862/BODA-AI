@@ -358,8 +358,16 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Text="Result Image"
-                                       Foreground="Gray" FontSize="12" Margin="10,5"/>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5">
+                                <TextBlock Text="Result Image"
+                                           Foreground="Gray" FontSize="12"
+                                           VerticalAlignment="Center"/>
+                                <Button Content="Clear" Click="ClearResultImage_Click"
+                                        Background="#3C3C3C" Foreground="White"
+                                        BorderBrush="#555555" BorderThickness="1"
+                                        Padding="8,2" Margin="10,0,0,0"
+                                        FontSize="11" Cursor="Hand"/>
+                            </StackPanel>
                             <Image Grid.Row="1" x:Name="ResultImageDisplay"
                                    Source="{Binding ResultImage}"
                                    Stretch="Uniform" Margin="5"/>

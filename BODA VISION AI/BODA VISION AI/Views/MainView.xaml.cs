@@ -387,6 +387,19 @@ namespace BODA_VISION_AI
 
         #endregion
 
+        #region Clear Result Image
+
+        /// <summary>
+        /// Result Image 초기화 버튼 클릭
+        /// </summary>
+        private void ClearResultImage_Click(object sender, RoutedEventArgs e)
+        {
+            var vm = DataContext as MainViewModel;
+            vm?.ClearResultImage();
+        }
+
+        #endregion
+
         #region ImageCanvas ROI Events
 
         /// <summary>

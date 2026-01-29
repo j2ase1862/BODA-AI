@@ -478,6 +478,16 @@ namespace BODA_VISION_AI.ViewModels
         #endregion
 
         /// <summary>
+        /// Result Image 초기화
+        /// </summary>
+        public void ClearResultImage()
+        {
+            ResultImage = null;
+            OverlayImage = null;
+            StatusMessage = "Result Image가 초기화되었습니다.";
+        }
+
+        /// <summary>
         /// 도구 순서 위로 이동
         /// </summary>
         private void MoveToolUp(ToolItem? tool)
