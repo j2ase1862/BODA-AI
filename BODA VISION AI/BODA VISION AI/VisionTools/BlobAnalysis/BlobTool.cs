@@ -210,13 +210,29 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
                 Cv2.FindContours(binaryImage, out Point[][] contours, out HierarchyIndex[] hierarchy,
                     RetrievalMode, ApproximationMode);
 
+                // ROI 사용 시 좌표 오프셋 계산 (ROI 기준 좌표 → 원본 이미지 절대 좌표)
+                int offsetX = 0, offsetY = 0;
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    var adjustedROI = GetAdjustedROI(inputImage);
+                    offsetX = adjustedROI.X;
+                    offsetY = adjustedROI.Y;
+                }
+
                 // Blob 정보 계산 및 필터링
                 var blobs = new List<BlobResult>();
                 int blobId = 0;
 
                 foreach (var contour in contours)
                 {
-                    var blob = CalculateBlobProperties(contour, blobId);
+                    // ROI 오프셋 적용: contour 좌표를 원본 이미지의 절대 좌표로 변환
+                    var absoluteContour = contour;
+                    if (offsetX != 0 || offsetY != 0)
+                    {
+                        absoluteContour = contour.Select(p => new Point(p.X + offsetX, p.Y + offsetY)).ToArray();
+                    }
+
+                    var blob = CalculateBlobProperties(absoluteContour, blobId);
 
                     // 필터링
                     if (blob.Area >= MinArea && blob.Area <= MaxArea &&
