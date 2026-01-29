@@ -182,7 +182,27 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
 
             try
             {
+                // ROI 오프셋 계산 (ROI 좌표계 → 원본 이미지 좌표계 변환)
+                int offsetX = 0, offsetY = 0;
+                bool hasROI = UseROI && ROI.Width > 0 && ROI.Height > 0;
+                Rect adjustedROI = default;
+                if (hasROI)
+                {
+                    adjustedROI = GetAdjustedROI(inputImage);
+                    offsetX = adjustedROI.X;
+                    offsetY = adjustedROI.Y;
+                }
+
+                // 디버그 로그
+                Debug.WriteLine($"[BlobTool] InputImage: {inputImage.Width}x{inputImage.Height}, Channels={inputImage.Channels()}");
+                Debug.WriteLine($"[BlobTool] UseROI={UseROI}, ROI=({ROI.X},{ROI.Y},{ROI.Width},{ROI.Height})");
+                if (hasROI)
+                    Debug.WriteLine($"[BlobTool] AdjustedROI=({adjustedROI.X},{adjustedROI.Y},{adjustedROI.Width},{adjustedROI.Height}), Offset=({offsetX},{offsetY})");
+
+                // ROI 영역 추출 (ROI가 설정된 경우 해당 영역만 처리)
                 Mat workImage = GetROIImage(inputImage);
+                Debug.WriteLine($"[BlobTool] WorkImage: {workImage.Width}x{workImage.Height}");
+
                 Mat binaryImage = new Mat();
 
                 // Grayscale 변환
@@ -206,11 +226,13 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
                         Cv2.BitwiseNot(binaryImage, binaryImage);
                 }
 
-                // Contour 검출
+                // Contour 검출 (ROI 기준 좌표계에서 수행)
                 Cv2.FindContours(binaryImage, out Point[][] contours, out HierarchyIndex[] hierarchy,
                     RetrievalMode, ApproximationMode);
 
-                // Blob 정보 계산 및 필터링
+                Debug.WriteLine($"[BlobTool] FindContours: {contours.Length} contours found");
+
+                // Blob 정보 계산 및 필터링 (ROI 기준 좌표)
                 var blobs = new List<BlobResult>();
                 int blobId = 0;
 
@@ -218,13 +240,15 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
                 {
                     var blob = CalculateBlobProperties(contour, blobId);
 
-                    // 필터링
+                    // 필터링 (면적/형상 기반 - 좌표 무관)
                     if (blob.Area >= MinArea && blob.Area <= MaxArea &&
                         blob.Perimeter >= MinPerimeter && blob.Perimeter <= MaxPerimeter &&
                         blob.Circularity >= MinCircularity && blob.Circularity <= MaxCircularity &&
                         blob.AspectRatio >= MinAspectRatio && blob.AspectRatio <= MaxAspectRatio &&
                         blob.Convexity >= MinConvexity)
                     {
+                        Debug.WriteLine($"[BlobTool] Blob#{blobId}: ROI-relative Center=({blob.CenterX:F1},{blob.CenterY:F1}), " +
+                            $"Absolute Center=({blob.CenterX + offsetX:F1},{blob.CenterY + offsetY:F1}), Area={blob.Area:F0}");
                         blobs.Add(blob);
                         blobId++;
                     }
@@ -237,48 +261,62 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
                 if (blobs.Count > MaxBlobCount)
                     blobs = blobs.Take(MaxBlobCount).ToList();
 
-                // ROI 오프셋 계산 (ROI 좌표계 → 원본 이미지 좌표계 변환용)
-                int offsetX = 0, offsetY = 0;
-                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
-                {
-                    var adjustedROI = GetAdjustedROI(inputImage);
-                    offsetX = adjustedROI.X;
-                    offsetY = adjustedROI.Y;
-                }
-
-                // 결과 이미지 생성
+                // 결과 오버레이 이미지 생성 (원본 이미지 크기)
                 Mat overlayImage = inputImage.Clone();
                 if (overlayImage.Channels() == 1)
                     Cv2.CvtColor(overlayImage, overlayImage, ColorConversionCodes.GRAY2BGR);
 
-                // ROI 영역 표시
-                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                Debug.WriteLine($"[BlobTool] OverlayImage: {overlayImage.Width}x{overlayImage.Height}");
+
+                // ROI 영역 경계 표시
+                if (hasROI)
                 {
-                    var adjustedROI = GetAdjustedROI(inputImage);
                     Cv2.Rectangle(overlayImage, adjustedROI, new Scalar(0, 200, 200), 2);
                 }
 
+                // 디버그 정보 텍스트 표시 (오버레이 이미지 좌측 상단)
+                int debugY = 20;
+                var debugColor = new Scalar(0, 255, 255); // Cyan
+                Cv2.PutText(overlayImage, $"Input: {inputImage.Width}x{inputImage.Height} ch={inputImage.Channels()}",
+                    new Point(10, debugY), HersheyFonts.HersheySimplex, 0.5, debugColor, 1);
+                debugY += 20;
+                Cv2.PutText(overlayImage, $"ROI: ({ROI.X},{ROI.Y},{ROI.Width},{ROI.Height}) UseROI={UseROI}",
+                    new Point(10, debugY), HersheyFonts.HersheySimplex, 0.5, debugColor, 1);
+                debugY += 20;
+                if (hasROI)
+                {
+                    Cv2.PutText(overlayImage, $"AdjROI: ({adjustedROI.X},{adjustedROI.Y},{adjustedROI.Width},{adjustedROI.Height})",
+                        new Point(10, debugY), HersheyFonts.HersheySimplex, 0.5, debugColor, 1);
+                    debugY += 20;
+                }
+                Cv2.PutText(overlayImage, $"Offset: ({offsetX},{offsetY}) Work: {workImage.Width}x{workImage.Height}",
+                    new Point(10, debugY), HersheyFonts.HersheySimplex, 0.5, debugColor, 1);
+                debugY += 20;
+                Cv2.PutText(overlayImage, $"Blobs: {blobs.Count} (contours: {contours.Length})",
+                    new Point(10, debugY), HersheyFonts.HersheySimplex, 0.5, debugColor, 1);
+
+                // Blob 그래픽 그리기 (ROI 오프셋 적용)
                 for (int i = 0; i < blobs.Count; i++)
                 {
                     var blob = blobs[i];
                     var color = GetBlobColor(i);
 
-                    // ROI 오프셋을 적용한 contour 좌표
-                    Point[] offsetContour = OffsetPoints(blob.Contour, offsetX, offsetY);
+                    // ROI 오프셋을 적용한 contour 좌표 (그리기용)
+                    Point[] drawContour = OffsetPoints(blob.Contour, offsetX, offsetY);
 
                     if (DrawContours)
                     {
-                        Cv2.DrawContours(overlayImage, new[] { offsetContour }, 0, color, 2);
+                        Cv2.DrawContours(overlayImage, new[] { drawContour }, 0, color, 2);
                     }
 
                     if (DrawBoundingBox)
                     {
-                        var offsetRect = new Rect(
+                        var drawRect = new Rect(
                             blob.BoundingRect.X + offsetX,
                             blob.BoundingRect.Y + offsetY,
                             blob.BoundingRect.Width,
                             blob.BoundingRect.Height);
-                        Cv2.Rectangle(overlayImage, offsetRect, new Scalar(255, 255, 0), 1);
+                        Cv2.Rectangle(overlayImage, drawRect, new Scalar(255, 255, 0), 1);
                     }
 
                     if (DrawCenterPoint)
@@ -290,23 +328,24 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
 
                     if (DrawLabels)
                     {
-                        Cv2.PutText(overlayImage, $"#{i}",
+                        // 블롭 번호와 좌표 정보 표시
+                        Cv2.PutText(overlayImage, $"#{i} ({(int)blob.CenterX + offsetX},{(int)blob.CenterY + offsetY})",
                             new Point((int)blob.CenterX + offsetX + 5, (int)blob.CenterY + offsetY - 5),
                             HersheyFonts.HersheySimplex, 0.4, new Scalar(255, 255, 255), 1);
                     }
 
-                    // Graphics 추가 (오프셋 적용된 좌표)
+                    // Graphics 오버레이 추가 (원본 좌표계)
                     result.Graphics.Add(new GraphicOverlay
                     {
                         Type = GraphicType.Polygon,
-                        Points = offsetContour.ToList(),
+                        Points = drawContour.ToList(),
                         Color = color
                     });
                 }
 
-                // ROI가 사용된 경우 이진화 이미지도 원본 크기로 적용
+                // ROI가 사용된 경우 이진화 출력도 원본 크기로 변환
                 Mat finalBinary;
-                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                if (hasROI)
                 {
                     finalBinary = ApplyROIResult(inputImage, binaryImage);
                     binaryImage.Dispose();
@@ -317,7 +356,9 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
                 }
 
                 result.Success = blobs.Count > 0;
-                result.Message = $"Blob 검출 완료: {blobs.Count}개";
+                result.Message = hasROI
+                    ? $"Blob 검출 완료: {blobs.Count}개 (ROI: {adjustedROI.X},{adjustedROI.Y} {adjustedROI.Width}x{adjustedROI.Height}, Offset: {offsetX},{offsetY})"
+                    : $"Blob 검출 완료: {blobs.Count}개";
                 result.OutputImage = finalBinary;
                 result.OverlayImage = overlayImage;
                 result.Data["BlobCount"] = blobs.Count;
@@ -340,6 +381,7 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
             {
                 result.Success = false;
                 result.Message = $"Blob 분석 실패: {ex.Message}";
+                Debug.WriteLine($"[BlobTool] Exception: {ex}");
             }
 
             sw.Stop();
