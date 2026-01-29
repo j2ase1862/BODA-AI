@@ -258,6 +258,13 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
                 if (overlayImage.Channels() == 1)
                     Cv2.CvtColor(overlayImage, overlayImage, ColorConversionCodes.GRAY2BGR);
 
+                // ROI 사용 시 ROI 영역 표시 (시각적 확인용)
+                if (UseROI && ROI.Width > 0 && ROI.Height > 0)
+                {
+                    var roiRect = GetAdjustedROI(inputImage);
+                    Cv2.Rectangle(overlayImage, roiRect, new Scalar(0, 255, 255), 2); // Cyan
+                }
+
                 for (int i = 0; i < blobs.Count; i++)
                 {
                     var blob = blobs[i];
@@ -296,11 +303,23 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
                 }
 
                 result.Success = blobs.Count > 0;
-                result.Message = $"Blob 검출 완료: {blobs.Count}개";
+                result.Message = UseROI
+                    ? $"Blob 검출 완료: {blobs.Count}개 (ROI: {ROI.X},{ROI.Y} {ROI.Width}x{ROI.Height}, Offset: {offsetX},{offsetY})"
+                    : $"Blob 검출 완료: {blobs.Count}개";
                 result.OutputImage = binaryImage;
                 result.OverlayImage = overlayImage;
                 result.Data["BlobCount"] = blobs.Count;
                 result.Data["Blobs"] = blobs;
+                result.Data["UseROI"] = UseROI;
+                if (UseROI)
+                {
+                    result.Data["ROI_X"] = ROI.X;
+                    result.Data["ROI_Y"] = ROI.Y;
+                    result.Data["ROI_Width"] = ROI.Width;
+                    result.Data["ROI_Height"] = ROI.Height;
+                    result.Data["Offset_X"] = offsetX;
+                    result.Data["Offset_Y"] = offsetY;
+                }
 
                 // 통계 정보
                 if (blobs.Count > 0)
