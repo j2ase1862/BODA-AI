@@ -261,6 +261,29 @@ namespace BODA_VISION_AI.VisionTools.BlobAnalysis
                     Cv2.Rectangle(overlayImage, adjustedROI, new Scalar(0, 200, 200), 2);
                 }
 
+                // 진단 정보 오버레이 (디버그용 - 원인 파악 후 제거)
+                int dbgY = 30;
+                var dbgColor = new Scalar(0, 255, 255); // Cyan
+                Cv2.PutText(overlayImage, $"InputImage: {inputImage.Width}x{inputImage.Height} Ch={inputImage.Channels()}", new Point(10, dbgY), HersheyFonts.HersheySimplex, 0.7, dbgColor, 2);
+                dbgY += 30;
+                Cv2.PutText(overlayImage, $"WorkImage: {workImage.Width}x{workImage.Height}", new Point(10, dbgY), HersheyFonts.HersheySimplex, 0.7, dbgColor, 2);
+                dbgY += 30;
+                Cv2.PutText(overlayImage, $"UseROI={UseROI} ROI=({ROI.X},{ROI.Y},{ROI.Width},{ROI.Height})", new Point(10, dbgY), HersheyFonts.HersheySimplex, 0.7, dbgColor, 2);
+                dbgY += 30;
+                Cv2.PutText(overlayImage, $"AdjROI=({adjustedROI.X},{adjustedROI.Y},{adjustedROI.Width},{adjustedROI.Height})", new Point(10, dbgY), HersheyFonts.HersheySimplex, 0.7, dbgColor, 2);
+                dbgY += 30;
+                Cv2.PutText(overlayImage, $"Offset=({offsetX},{offsetY}) hasROI={hasROI}", new Point(10, dbgY), HersheyFonts.HersheySimplex, 0.7, dbgColor, 2);
+                dbgY += 30;
+                Cv2.PutText(overlayImage, $"Blobs found: {blobs.Count}", new Point(10, dbgY), HersheyFonts.HersheySimplex, 0.7, dbgColor, 2);
+                if (blobs.Count > 0)
+                {
+                    dbgY += 30;
+                    var b0 = blobs[0];
+                    Cv2.PutText(overlayImage, $"Blob0 ROI-relative: center=({b0.CenterX:F0},{b0.CenterY:F0}) rect=({b0.BoundingRect.X},{b0.BoundingRect.Y},{b0.BoundingRect.Width},{b0.BoundingRect.Height})", new Point(10, dbgY), HersheyFonts.HersheySimplex, 0.5, dbgColor, 1);
+                    dbgY += 25;
+                    Cv2.PutText(overlayImage, $"Blob0 Absolute: center=({b0.CenterX + offsetX:F0},{b0.CenterY + offsetY:F0})", new Point(10, dbgY), HersheyFonts.HersheySimplex, 0.5, dbgColor, 1);
+                }
+
                 // Blob 그래픽 그리기 (ROI 오프셋 적용하여 원본 좌표계로 변환)
                 for (int i = 0; i < blobs.Count; i++)
                 {
